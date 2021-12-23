@@ -98,14 +98,19 @@ RUN cd /home/build/builds && \
 RUN cd /home/build/builds && \
 	git clone https://github.com/libevent/libevent && \
 	cd libevent && \
-	autogen.sh && \
-	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure --host=arm-linux-gnueabihf LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
+	./autogen.sh && \
+	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
+		--host=arm-linux-gnueabihf \
+		LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
 	make -j 4
 
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
 	./autogen.sh && \
-	./configure --host=arm-linux-gnueabihf --with-boost-libdir=/home/build/builds/boost/stage/lib LDFLAGS="-lboost_filesystem -lboost_system -L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/" && \
+	./configure --host=arm-linux-gnueabihf \
+		--with-boost-libdir=/home/build/builds/boost/stage/lib \
+		LDFLAGS="-lboost_filesystem -lboost_system -L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/" \
+		CFLAGS="-DBOOST_NO_CXX11_SCOPED_ENUMS" && \
 	make -j 4
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
