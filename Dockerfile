@@ -19,7 +19,7 @@ RUN apt update && \
 USER build
 RUN cd /home/build/builds && \
 	git clone https://github.com/bitcoin/bitcoin
-RUN cd bitcoin && \
+RUN cd /home/build/builds/bitcoin && \
 	./autogen.sh && \
 	./configure && \
 	make -j 4
