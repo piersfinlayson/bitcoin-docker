@@ -94,7 +94,7 @@ RUN cd /home/build/builds && \
 	    echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
 	cd boost && \
 	./bootstrap.sh && \
-	./b2 --with-filesystem --with-system
+	./b2 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds && \
 	git clone https://github.com/libevent/libevent && \
 	cd libevent && \
