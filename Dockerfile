@@ -29,9 +29,7 @@ FROM ubuntu:20.04
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container"
 
-RUN useradd -ms /bin/bash bitcoin && \
-    mkdir /home/bitcoin && \
-    chown -R bitcoin:bitcoin /home/bitcoin
+RUN useradd -ms /bin/bash bitcoin 
 USER bitcoin
 RUN mkdir /home/bitcoin/bin
 COPY --from=0 /home/build/builds/bitcoin/bin/* /home/bitcoin/bin
