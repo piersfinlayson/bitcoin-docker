@@ -90,8 +90,9 @@ RUN apt update && \
 USER build
 # Build boost from source for armv7l
 RUN cd /home/build/builds && \
-	git clone  https://github.com/boostorg/boost --recursive && \
-	    echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
+	git clone  https://github.com/boostorg/boost --recursive
+RUN cd /home/build/builds/boost && \
+	echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
 	cd boost && \
 	./bootstrap.sh && \
 	./b2 --with-filesystem --with-system --with-test
