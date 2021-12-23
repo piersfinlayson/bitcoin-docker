@@ -1,7 +1,7 @@
 FROM piersfinlayson/build:latest
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
-LABEL description="Piers's Bitcoin Node Container"
+LABEL description="Piers's Bitcoin Node Build Container"
 
 # This stuff is included build:from 0.3.7 onwards
 USER root
@@ -23,3 +23,12 @@ RUN cd /home/build/builds && \
 	./autogen.sh && \
 	./configure && \
 	./make
+
+FROM ubuntu:20.04
+
+LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
+LABEL description="Piers's Bitcoin Node Container"
+
+RUN mkdir /bitcoin-sw
+COPY --from=0 /home/build/builds/bitcoin/bin/* /bitcoin-sw
+CMD ["/bin/bash"]
