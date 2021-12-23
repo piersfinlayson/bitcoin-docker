@@ -138,6 +138,7 @@ RUN cd /home/build/builds/bitcoin && \
 		--pkgversion=1 \
 		--pkgrelease=1 \
 		--pkglicense=MIT \
+		--arch=armv7l \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
