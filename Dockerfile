@@ -32,6 +32,6 @@ LABEL description="Piers's Bitcoin Node Container"
 RUN useradd -ms /bin/bash bitcoin 
 USER bitcoin
 RUN mkdir /home/bitcoin/bin
-COPY --from=0 /home/build/builds/bitcoin/bin/* /home/bitcoin/bin
+COPY --from=0 /home/build/builds/bitcoin/bin/* /home/bitcoin/bin/
 VOLUME ["/bitcoin-data"]
 CMD ["/bin/bash"]
