@@ -88,14 +88,14 @@ RUN apt update && \
     rm -fr /var/lib/apt/lists/*
 
 USER build
-# Build boost from source for armv7l
+# Build boost and libevent from source for armv7l
 RUN cd /home/build/builds && \
 	git clone  https://github.com/boostorg/boost --recursive
 RUN cd /home/build/builds/boost && \
 	echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
-	cd boost && \
+	cd /home/build/builds/boost && \
 	./bootstrap.sh && \
-	./b2 --with-filesystem --with-system --with-test
+	./b2 link=static --with-filesystem --with-system --with-test
 RUN cd /home/build/builds && \
 	git clone https://github.com/libevent/libevent && \
 	cd libevent && \
@@ -105,13 +105,25 @@ RUN cd /home/build/builds && \
 		LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
 	make -j 4
 
+# TODO remove - temporary
+USER root
+RUN apt update && \
+        DEBIAN_FRONTEND=noninteractive apt-get remove -y \
+                libboost-dev \
+                libboost-filesystem-dev \
+                libboost-system-dev \
+                libboost-test-dev && \
+    apt-get clean && \
+    rm -fr /var/lib/apt/lists/*
+USER build
+
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
 	./autogen.sh && \
 	./configure --host=arm-linux-gnueabihf \
 		--with-boost-libdir=/home/build/builds/boost/stage/lib \
-		LDFLAGS="-lboost_filesystem -lboost_system -L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/" \
-		CFLAGS="-DBOOST_NO_CXX11_SCOPED_ENUMS" && \
+		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/ -static -lboost_filesystem -lboost_system" \
+		CFLAGS="-DBOOST_NO_CXX11_SCOPED_ENUMS -DBOOST_NO_CXX17_INLINE_VARIABLES -DBOOST_NO_CXX11_RVALUE_REFERENCES" && \
 	make -j 4
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
