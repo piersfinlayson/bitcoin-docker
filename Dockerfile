@@ -4,6 +4,7 @@ LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container"
 
 # This stuff is included build:from 0.3.7 onwards
+USER root
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 bsdmainutils \
