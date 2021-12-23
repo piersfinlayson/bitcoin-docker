@@ -141,7 +141,7 @@ RUN cd /home/build/builds/bitcoin && \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
-FROM builder-armv7l as bitcoin-image-armv7l
+FROM scratch as bitcoin-image-armv7l
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
 
 #
