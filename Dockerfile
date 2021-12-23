@@ -114,16 +114,23 @@ RUN apt update && \
                 libboost-system-dev \
                 libboost-test-dev && \
     apt-get clean && \
-    rm -fr /var/lib/apt/lists/*
+    rm -fr /var/lib/apt/lists/* && \
+    rm -fr /usr/include/boost
 USER build
 
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
 	./autogen.sh && \
-	./configure --host=arm-linux-gnueabihf \
-		--with-boost-libdir=/home/build/builds/boost/stage/lib \
-		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/ -static -lboost_filesystem -lboost_system" \
-		CFLAGS="-DBOOST_NO_CXX11_SCOPED_ENUMS -DBOOST_NO_CXX17_INLINE_VARIABLES -DBOOST_NO_CXX11_RVALUE_REFERENCES" && \
+	BOOST_ROOT=/home/build/builds/boost/ \
+		./configure \
+		--with-boost=yes \
+		--host=arm-linux-gnueabihf \
+		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/" \
+		CPPFLAGS="-I/home/build/builds/boost" \
+		--with-boost-filesystem=boost_filesystem \
+		--with-boost-system=boost_system \
+		--disable-tests \
+		--with-seccomp=no && \
 	make -j 4
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
