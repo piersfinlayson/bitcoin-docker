@@ -142,13 +142,13 @@ RUN cd /home/build/builds/bitcoin && \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
-FROM scratch as bitcoin-image-armv7l
+FROM scratch as bitcoin-image-only-armv7l
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
 
 #
 # arm32v7l version of bitcoin container
 #
-FROM piersfinlayson/bitcoin-image-armv7l:latest as bitcoin-image-armv7l
+FROM piersfinlayson/bitcoin-image-only-armv7l:latest as bitcoin-image-armv7l
 FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
