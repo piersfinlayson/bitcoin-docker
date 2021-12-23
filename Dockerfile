@@ -18,11 +18,11 @@ RUN apt update && \
 
 USER build
 RUN cd /home/build/builds && \
-	git clone https://github.com/bitcoin/bitcoin && \
-	cd bitcoin && \
+	git clone https://github.com/bitcoin/bitcoin
+RUN cd bitcoin && \
 	./autogen.sh && \
 	./configure && \
-	make
+	make -j 4
 
 FROM ubuntu:20.04
 
