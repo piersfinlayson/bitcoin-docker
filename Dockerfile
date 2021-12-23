@@ -1,3 +1,6 @@
+#
+# Add bitcoin specific packages
+#
 FROM piersfinlayson/build:latest as pre-builder
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
@@ -23,7 +26,9 @@ RUN cd /home/build/builds && \
 	git clone https://github.com/bitcoin/bitcoin
 USER root
 
+#
 # x86 version of the builder - builds the source and packages it up
+#
 FROM pre-builder as builder-amd64
 LABEL description="Piers's Bitcoin Node Build Container (amd64)"
 RUN cd /home/build/builds/bitcoin && \
@@ -40,8 +45,10 @@ RUN cd /home/build/builds/bitcoin && \
 		-y \
 		--install=no
 
+#
 # amd64 version of bitcoin container - installed dpkg from previous stage
-FROM builder-amd64 as bitcoin-amd64
+#
+FROM ubuntu:20.04 as bitcoin-amd64
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container (amd64)"
@@ -64,7 +71,9 @@ USER bitcoin
 VOLUME ["/bitcoin-data"]
 CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
 
+#
 # arm32v7l version of the builder container - needs to install armv7l version of g++ and get boost source code, then builds bitcoin and creates dpkg
+#
 FROM pre-builder as builder-armv7l
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
@@ -110,7 +119,9 @@ RUN cd /home/build/builds/bitcoin && \
 FROM builder-armv7l as bitcoin-image-armv7l
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
 
+#
 # arm32v7l version of bitcoin container
+#
 FROM piersfinlayson/bitcoin-image-armv7l:latest as bitcoin-image-armv7l
 FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
 
