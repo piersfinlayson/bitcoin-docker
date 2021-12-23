@@ -22,7 +22,7 @@ RUN cd /home/build/builds && \
 	cd bitcoin && \
 	./autogen.sh && \
 	./configure && \
-	./make
+	make
 
 FROM ubuntu:20.04
 
