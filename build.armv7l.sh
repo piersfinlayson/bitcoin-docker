@@ -9,7 +9,7 @@ else
 	echo Building version $VERSION
 fi
 docker pull piersfinlayson/bitcoin-image-only-armv7l:$VERSION
-docker build --build-arg VERSION=$VERSION --target bitcoin-armv7l -t piersfinlayson/bitcoin-armv7l:$VERSION -f Dockerfile.arm .
+docker build --progress=plain --build-arg VERSION=$VERSION --target bitcoin-armv7l -t piersfinlayson/bitcoin-armv7l:$VERSION -f Dockerfile.arm .
 docker tag piersfinlayson/bitcoin-armv7l:$VERSION piersfinlayson/bitcoin-armv7l:latest
 docker login -u piersfinlayson
 docker push piersfinlayson/bitcoin-armv7l:$VERSION

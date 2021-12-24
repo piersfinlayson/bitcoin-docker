@@ -9,11 +9,11 @@ else
 	echo Building version $VERSION
 fi
 # Build the amd64 version - including latest
-docker build --target bitcoin-amd64 -t piersfinlayson/bitcoin-amd64:$VERSION .
+docker build --progress=plain --target bitcoin-amd64 -t piersfinlayson/bitcoin-amd64:$VERSION .
 docker tag piersfinlayson/bitcoin-amd64:$VERSION piersfinlayson/bitcoin-amd64:latest
 
 # Build the armv7l image only version - don't bother with latest
-docker build --build-arg VERSION=$VERSION --target bitcoin-image-only-armv7l -t piersfinlayson/bitcoin-image-only-armv7l:$VERSION .
+docker build --progress=plain --build-arg VERSION=$VERSION --target bitcoin-image-only-armv7l -t piersfinlayson/bitcoin-image-only-armv7l:$VERSION .
 
 # Push both versions
 docker login -u piersfinlayson
