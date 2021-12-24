@@ -35,4 +35,4 @@ docker push piersfinlayson/bitcoin-amd64:$CONT_VERSION
 docker push piersfinlayson/bitcoin-amd64:latest
 docker push piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
 echo Now you need to build the armv7l version on an armv7l machine using the following command:
-echo ./build.armv7l.sh $CONT_VERSION
+echo ./build.armv7l.sh $BITCOIN_VERSION $CONT_VERSION
