@@ -16,6 +16,10 @@ then
 else
 	echo Building version $CONT_VERSION
 fi
+
+# Forcibly get the latest build container
+docker pull piersfinlayson/build:latest
+
 # Build the amd64 version - including latest
 docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-amd64 -t piersfinlayson/bitcoin-amd64:$CONT_VERSION .
 docker tag piersfinlayson/bitcoin-amd64:$CONT_VERSION piersfinlayson/bitcoin-amd64:latest

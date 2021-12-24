@@ -6,14 +6,16 @@ FROM piersfinlayson/build:latest as pre-builder
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Pre-Build Container"
 
-# This stuff is included build:from 0.3.7 onwards
+# Delete stuff we don't want from build container
 USER root
 RUN apt update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        bsdmainutils \
-		checkinstall && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/*
+	DEBIAN_FRONTEND=noninteractive apt-get remove -y \
+		libboost-dev \
+		libboost-filesystem-dev \
+		libboost-system-dev \
+		libboost-test-dev \
+		libevent-dev  && \
+    rm -fr /usr/include/boost
 
 # Get boost source
 USER build
@@ -22,9 +24,9 @@ RUN cd /home/build/builds && \
 
 # Get libevent source
 RUN cd /home/build/builds && \
-	git clone https://github.com/libevent/libevent && \
+	git clone https://github.com/libevent/libevent
 RUN cd /home/build/builds/libevent && \
-    ./autogen.sh && \
+    ./autogen.sh
 
 # Get bitcoin source
 USER build
