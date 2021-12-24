@@ -165,7 +165,7 @@ RUN cd /home/build/builds/libevent && \
 		--install=no
 
 FROM scratch as bitcoin-image-only-armv7l
-COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
-COPY --from=builder-armv7l /home/build/builds/boost/libboost_1-1_armv7l.deb /
-COPY --from=builder-armv7l /home/build/builds/libevent/libevent_1-1_armv7l.deb /
+COPY --from=builder-armhf /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
+COPY --from=builder-armhf /home/build/builds/boost/libboost_1-1_armv7l.deb /
+COPY --from=builder-armhf /home/build/builds/libevent/libevent_1-1_armv7l.deb /
 
