@@ -59,7 +59,7 @@ LABEL description="Piers's Bitcoin Node Build Container (amd64)"
 USER build
 RUN cd /home/build/builds/boost && \
 	./bootstrap.sh && \
-	./b2 link=static --with-filesystem --with-system --with-test
+	./b2 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
 	./configure \
 	make -j 2
@@ -147,9 +147,8 @@ RUN apt update && \
 USER build
 RUN cd /home/build/builds/boost && \
 	echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
-	cd /home/build/builds/boost && \
 	./bootstrap.sh && \
-	./b2 link=static --with-filesystem --with-system --with-test
+	./b2 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
 	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
 		--host=arm-linux-gnueabihf \
