@@ -142,32 +142,30 @@ RUN cd /home/build/builds/bitcoin && \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
+RUN cd /home/build/builds/boost && \
+	sudo checkinstall \
+		--pkgname=libboost \
+		--pkgversion=1 \
+		--pkgrelease=1 \
+		--pkglicense=MIT \
+		--arch=armv7l \
+		--maintainer=piers@piersandkatie.com \
+		-y \
+		--install=no \
+		./b2 install --prefix=/usr
+RUN cd /home/build/builds/libevent && \
+	sudo checkinstall \
+		--pkgname=libevent \
+		--pkgversion=1 \
+		--pkgrelease=1 \
+		--pkglicense=MIT \
+		--arch=armv7l \
+		--maintainer=piers@piersandkatie.com \
+		-y \
+		--install=no
+
 FROM scratch as bitcoin-image-only-armv7l
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armv7l.deb /
+COPY --from=builder-armv7l /home/build/builds/bitcoin/libboost_1-1_armv7l.deb /
+COPY --from=builder-armv7l /home/build/builds/bitcoin/libevent_1-1_armv7l.deb /
 
-#
-# arm32v7l version of bitcoin container
-#
-FROM piersfinlayson/bitcoin-image-only-armv7l:latest as bitcoin-image-armv7l
-FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
-
-LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
-LABEL description="Piers's Bitcoin Node Container (armv7l)"
-
-RUN useradd -ms /bin/false bitcoin
-RUN apt update && \
-        DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                bsdmainutils \
-                libboost-dev \
-                libboost-filesystem-dev \
-                libboost-system-dev \
-                libboost-test-dev \
-                libevent-dev && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/*
-COPY --from=bitcoin-image-armv7l /bitcoin_1-1_armv7l.deb /home/bitcoin/
-RUN dpkg --install /home/bitcoin/bitcoin_1-1_armv7l.deb
-
-USER bitcoin
-VOLUME ["/bitcoin-data"]
-CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]

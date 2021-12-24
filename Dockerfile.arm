@@ -1,0 +1,21 @@
+#
+# arm32v7l version of bitcoin container
+#
+ARG VERSION
+FROM piersfinlayson/bitcoin-image-only-armv7l:$VERSION as bitcoin-image-only-armv7l
+FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
+
+LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
+LABEL description="Piers's Bitcoin Node Container (armv7l)"
+
+RUN useradd -ms /bin/false bitcoin
+COPY --from=bitcoin-image-only-armv7l /bitcoin_1-1_armv7l.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-armv7l /libboost_1-1_armv7l.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-armv7l /libevent_1-1_armv7l.deb /home/bitcoin/
+RUN dpkg --install /home/bitcoin/bitcoin_1-1_armv7l.deb
+RUN dpkg --install /home/bitcoin/libboost_1-1_armv7l.deb
+RUN dpkg --install /home/bitcoin/libevent_1-1_armv7l.deb
+
+USER bitcoin
+VOLUME ["/bitcoin-data"]
+CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
