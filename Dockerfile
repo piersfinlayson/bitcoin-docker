@@ -258,7 +258,11 @@ RUN cd /home/build/builds/libevent && \
 		--install=no
 
 FROM scratch as bitcoin-image-only-armv7l
+ARG BITCOIN_VERSION
+ARG CONT_VERSION
+ARG LIBDB_VERSION=4.8.30.NC
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
+COPY --from=builder-armv7l /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /
 
