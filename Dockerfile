@@ -111,6 +111,29 @@ RUN cd /home/build/builds/bitcoin && \
 		-y \
 		--install=no
 
+# Build boost and libevent packages
+RUN cd /home/build/builds/boost && \
+	sudo checkinstall \
+		--pkgname=libboost \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
+		--pkglicense=MIT \
+		--arch=amd64 \
+		--maintainer=piers@piersandkatie.com \
+		-y \
+		--install=no \
+		./b2 install --prefix=/usr
+RUN cd /home/build/builds/libevent && \
+	sudo checkinstall \
+		--pkgname=libevent \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
+		--pkglicense=MIT \
+		--arch=amd64 \
+		--maintainer=piers@piersandkatie.com \
+		-y \
+		--install=no
+
 #
 # amd64 version of bitcoin container - installed dpkg from previous stage
 #
@@ -129,8 +152,12 @@ ARG CONT_VERSION
 ARG BITCOIN_VERSION
 COPY --from=builder-amd64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
+COPY --from=builder-amd64 /home/build/builds/libevent/libevent_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
+COPY --from=builder-amd64 /home/build/builds/boost/libboost_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
+RUN dpkg --install /home/bitcoin/libevent_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
+RUN dpkg --install /home/bitcoin/libboost_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
 
 USER bitcoin
 VOLUME ["/bitcoin-data"]
@@ -201,8 +228,8 @@ RUN cd /home/builds/builds/bitcoin && \
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
-		--pkgversion=1 \
-		--pkgrelease=1 \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
 		--pkglicense=MIT \
 		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
@@ -211,8 +238,8 @@ RUN cd /home/build/builds/bitcoin && \
 RUN cd /home/build/builds/boost && \
 	sudo checkinstall \
 		--pkgname=libboost \
-		--pkgversion=1 \
-		--pkgrelease=1 \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
 		--pkglicense=MIT \
 		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
@@ -222,8 +249,8 @@ RUN cd /home/build/builds/boost && \
 RUN cd /home/build/builds/libevent && \
 	sudo checkinstall \
 		--pkgname=libevent \
-		--pkgversion=1 \
-		--pkgrelease=1 \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
 		--pkglicense=MIT \
 		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
@@ -231,7 +258,7 @@ RUN cd /home/build/builds/libevent && \
 		--install=no
 
 FROM scratch as bitcoin-image-only-armv7l
-COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_1-1_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/boost/libboost_1-1_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/libevent/libevent_1-1_armhf.deb /
+COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
+COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
+COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
 
