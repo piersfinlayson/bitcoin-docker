@@ -84,10 +84,20 @@ RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_
 
 # Build bitcoin
 RUN cd /home/build/builds/bitcoin && \
-	./configure \
-        CPPFLAGS="-I/home/build/builds/bitcoin/db4/include" \
-        LDFLAGS="-L/home/build/builds/bitcoin/db4/lib" && \
-	make -j 2
+	BOOST_ROOT=/home/build/builds/boost/ \
+        PKG_CONFIG_PATH=/home/build/builds/libevent \
+        LIBS="-levent" \
+		./configure \
+		--with-boost=yes \
+		--host=x86_64 \
+		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/lib/gcc/x86_64-linux-gnu/9" \
+		CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I/home/build/builds/libevent/include" \
+		--with-boost-filesystem=boost_filesystem \
+		--with-boost-system=boost_system \
+        --disable-tests
+# Needed to fix https://github.com/bitcoin/bitcoin/pull/23607
+RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
+RUN	cd /home/build/builds/bitcoin && make -j 2
 RUN cd /home/build/builds/bitcoin && \
     make check
 ARG BITCOIN_VERSION
@@ -101,6 +111,8 @@ RUN cd /home/build/builds/bitcoin && \
 		-y \
 		--install=no
 
+RUN bring other packages
+
 #
 # amd64 version of bitcoin container - installed dpkg from previous stage
 #
@@ -112,11 +124,6 @@ RUN useradd -ms /bin/false bitcoin
 RUN apt update && \
         DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 bsdmainutils \
-                libboost-dev \
-                libboost-filesystem-dev \
-                libboost-system-dev \
-                libboost-test-dev \
-                libevent-dev && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
 ARG LIBDB_VERSION=4.8.30.NC
@@ -177,6 +184,7 @@ RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
 	BOOST_ROOT=/home/build/builds/boost/ \
+        PKG_CONFIG_PATH=/home/build/builds/libevent \
 		./configure \
 		--with-boost=yes \
 		--host=arm-linux-gnueabihf \
@@ -185,8 +193,10 @@ RUN cd /home/build/builds/bitcoin && \
 		--with-boost-filesystem=boost_filesystem \
 		--with-boost-system=boost_system \
 		--disable-tests \
-		--with-seccomp=no && \
-	make -j 2
+		--with-seccomp=no
+# Needed to fix https://github.com/bitcoin/bitcoin/pull/23607
+RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
+RUN	cd /home/build/builds/bitcoin && make -j 2
 RUN cd /home/builds/builds/bitcoin && \
     make check
 RUN cd /home/build/builds/bitcoin && \
