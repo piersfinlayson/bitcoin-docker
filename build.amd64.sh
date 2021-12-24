@@ -10,6 +10,7 @@ else
 fi
 docker build --target bitcoin-amd64 -t piersfinlayson/bitcoin-amd64:$VERSION .
 docker build --build-arg VERSION=$VERSION --target bitcoin-image-only-armv7l -t piersfinlayson/bitcoin-image-only-armv7l:$VERSION .
+docker login -u piersfinlayson
 docker push piersfinlayson/bitcoin-amd64:$VERSION
 docker push piersfinlayson/bitcoin-image-only-armv7l:$VERSION
 echo Now you need to build the armv7l version on an armv7l machine using the dpkg in bitcoin-builder-armv7l:$VERSION
