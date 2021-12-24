@@ -18,16 +18,24 @@ RUN apt update && \
 # Get boost source
 USER build
 RUN cd /home/build/builds && \
-	git clone  https://github.com/boostorg/boost --recursive
+	git clone https://github.com/boostorg/boost --recursive
 
 # Get libevent source
 RUN cd /home/build/builds && \
-	git clone https://github.com/libevent/libevent
+	git clone https://github.com/libevent/libevent && \
+RUN cd /home/build/builds/libevent && \
+    ./autogen.sh && \
 
 # Get bitcoin source
 USER build
 RUN cd /home/build/builds && \
 	git clone https://github.com/bitcoin/bitcoin
+
+# Checkout right version of bitcoin
+ARG BITCOIN_VERSION
+RUN cd /home/build/builds/bitcoin && \
+    git checkout $BITCOIN_VERSION && \
+    ./autogen.sh
 
 # Done
 USER root
@@ -38,20 +46,13 @@ USER root
 FROM pre-builder as builder-amd64
 LABEL description="Piers's Bitcoin Node Build Container (amd64)"
 
-# Checkout right vesion of bitcoin
-ARG BITCOIN_VERSION
-USER build
-RUN cd /home/build/builds/bitcoin && \
-    git checkout $BITCOIN_VERSION
-
 # Build boost and libevent
 USER build
 RUN cd /home/build/builds/boost && \
 	cd /home/build/builds/boost && \
-	./bootstrap.sh && \
+	./bootstrap.sh
 	./b2 link=static --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
-	./autogen.sh && \
 	./configure \
 	make -j 2
 
@@ -73,13 +74,13 @@ RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_
 
 # Build bitcoin
 RUN cd /home/build/builds/bitcoin && \
-	./autogen.sh && \
 	./configure \
         CPPFLAGS="-I/home/build/builds/bitcoin/db4/include" \
         LDFLAGS="-L/home/build/builds/bitcoin/db4/lib" && \
 	make -j 2
 RUN cd /home/build/builds/bitcoin && \
     make check
+ARG BITCOIN_VERSION
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
@@ -95,7 +96,6 @@ RUN cd /home/build/builds/bitcoin && \
 #
 FROM ubuntu:20.04 as bitcoin-amd64
 
-LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container (amd64)"
 
 RUN useradd -ms /bin/false bitcoin 
@@ -126,7 +126,6 @@ CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
 #
 FROM pre-builder as builder-armv7l
 
-LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Build Container (armv7l)"
 
 USER root
@@ -144,7 +143,6 @@ RUN cd /home/build/builds/boost && \
 	./bootstrap.sh && \
 	./b2 link=static --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
-	./autogen.sh && \
 	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
 		--host=arm-linux-gnueabihf \
 		LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
@@ -169,8 +167,6 @@ RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_
 
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
-    git checkout $BITCOIN_VERSION && \
-	./autogen.sh && \
 	BOOST_ROOT=/home/build/builds/boost/ \
 		./configure \
 		--with-boost=yes \
