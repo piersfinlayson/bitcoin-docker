@@ -201,7 +201,7 @@ RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
 		--pkgrelease=$CONT_VERSION \
 		--pkglicense=MIT \
 		--maintainer=piers@piersandkatie.com \
-        --arch=amdhf \
+        --arch=armhf \
 		-y \
 		--install=no
 RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /home/build/builds/bitcoin
