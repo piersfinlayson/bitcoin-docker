@@ -111,8 +111,6 @@ RUN cd /home/build/builds/bitcoin && \
 		-y \
 		--install=no
 
-RUN bring other packages
-
 #
 # amd64 version of bitcoin container - installed dpkg from previous stage
 #
@@ -123,7 +121,7 @@ LABEL description="Piers's Bitcoin Node Container (amd64)"
 RUN useradd -ms /bin/false bitcoin 
 RUN apt update && \
         DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                bsdmainutils \
+                bsdmainutils && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
 ARG LIBDB_VERSION=4.8.30.NC
