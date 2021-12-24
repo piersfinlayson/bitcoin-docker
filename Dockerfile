@@ -24,6 +24,8 @@ RUN apt update && \
 USER build
 RUN cd /home/build/builds && \
 	git clone https://github.com/bitcoin/bitcoin
+
+# Done
 USER root
 
 #
@@ -31,15 +33,41 @@ USER root
 #
 FROM pre-builder as builder-amd64
 LABEL description="Piers's Bitcoin Node Build Container (amd64)"
+
+# Checkout right vesion of bitcoin
+ARG BITCOIN_VERSION
+USER build
+RUN cd /home/build/builds/bitcoin && \
+    git checkout $BITCOIN_VERSION
+
+# Build Berkley DB source and create a .deb
+RUN cd /home/build/builds/bitcoin && \
+    ./contrib/install_db4.sh `pwd`
+ARG LIBDB_VERSION=4.8.30.NC
+ARG CONT_VERSION
+RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
+    sudo checkinstall \
+		--pkgname=libdb \
+		--pkgversion=$LIBDB_VERSION \
+		--pkgrelease=$CONT_VERSION \
+		--pkglicense=MIT \
+		--maintainer=piers@piersandkatie.com \
+		-y \
+		--install=no
+RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb /home/build/builds/bitcoin
+
+# Build bitcoin
 RUN cd /home/build/builds/bitcoin && \
 	./autogen.sh && \
-	./configure && \
+	./configure \
+        CPPFLAGS="-I/home/build/builds/bitcoin/db4/include" \
+        LDFLAGS="-L/home/build/builds/bitcoin/db4/lib" && \
 	make -j 4
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
-		--pkgversion=1 \
-		--pkgrelease=1 \
+		--pkgversion=$BITCOIN_VERSION \
+		--pkgrelease=$CONT_VERSION \
 		--pkglicense=MIT \
 		--maintainer=piers@piersandkatie.com \
 		-y \
@@ -64,8 +92,10 @@ RUN apt update && \
                 libevent-dev && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
-COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_1-1_amd64.deb /home/bitcoin/
-RUN dpkg --install /home/bitcoin/bitcoin_1-1_amd64.deb
+COPY --from=builder-amd64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-$CONT_VERSION_amd64.deb /home/bitcoin/
+COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-$CONT_VERSION_amd64.deb /home/bitcoin/
+RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-$CONT_VERSION_amd64.deb
+RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-$CONT_VERSION_amd64.deb
 
 USER bitcoin
 VOLUME ["/bitcoin-data"]
@@ -120,6 +150,7 @@ USER build
 
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
+    git checkout $BITCOIN_VERSION && \
 	./autogen.sh && \
 	BOOST_ROOT=/home/build/builds/boost/ \
 		./configure \
