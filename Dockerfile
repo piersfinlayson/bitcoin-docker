@@ -8,6 +8,13 @@ LABEL description="Piers's Bitcoin Node Pre-Build Container"
 
 # Delete stuff we don't want from build container
 USER root
+# Can remove this once move up to 0.3.7 of build container:
+RUN apt update && \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        bsdmainutils \
+		checkinstall \
+    apt-get clean && \
+    rm -fr /var/lib/apt/lists/*
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt-get remove -y \
 		libboost-dev \
