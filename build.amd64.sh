@@ -14,7 +14,7 @@ then
 	echo "Usage build.arch.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
 else
-	echo Building version $CONT_VERSION
+	echo Building container version $CONT_VERSION
 fi
 
 # Forcibly get the latest build container

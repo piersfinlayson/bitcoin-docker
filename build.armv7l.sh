@@ -14,7 +14,7 @@ then
 	echo "Usage build.arch.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
 else
-	echo Building version $CONT_VERSION
+	echo Building container version $CONT_VERSION
 fi
 docker pull piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
 docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-armv7l -t piersfinlayson/bitcoin-armv7l:$CONT_VERSION -f Dockerfile.arm .
