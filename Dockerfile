@@ -10,15 +10,19 @@ LABEL description="Piers's Bitcoin Node Pre-Build Container"
 USER root
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                bsdmainutils \
-		checkinstall \
-                libboost-dev \
-                libboost-filesystem-dev \
-                libboost-system-dev \
-                libboost-test-dev \
-                libevent-dev && \
+        bsdmainutils \
+		checkinstall && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
+
+# Get boost source
+USER build
+RUN cd /home/build/builds && \
+	git clone  https://github.com/boostorg/boost --recursive
+
+# Get libevent source
+RUN cd /home/build/builds && \
+	git clone https://github.com/libevent/libevent
 
 # Get bitcoin source
 USER build
@@ -39,6 +43,17 @@ ARG BITCOIN_VERSION
 USER build
 RUN cd /home/build/builds/bitcoin && \
     git checkout $BITCOIN_VERSION
+
+# Build boost and libevent
+USER build
+RUN cd /home/build/builds/boost && \
+	cd /home/build/builds/boost && \
+	./bootstrap.sh && \
+	./b2 link=static --with-filesystem --with-system --with-test
+RUN cd /home/build/builds/libevent && \
+	./autogen.sh && \
+	./configure \
+	make -j 2
 
 # Build Berkley DB source and create a .deb
 RUN cd /home/build/builds/bitcoin && \
@@ -62,7 +77,7 @@ RUN cd /home/build/builds/bitcoin && \
 	./configure \
         CPPFLAGS="-I/home/build/builds/bitcoin/db4/include" \
         LDFLAGS="-L/home/build/builds/bitcoin/db4/lib" && \
-	make -j 4
+	make -j 2
 RUN cd /home/build/builds/bitcoin && \
     make check
 RUN cd /home/build/builds/bitcoin && \
@@ -94,10 +109,13 @@ RUN apt update && \
                 libevent-dev && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
-COPY --from=builder-amd64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-$CONT_VERSION_amd64.deb /home/bitcoin/
-COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-$CONT_VERSION_amd64.deb /home/bitcoin/
-RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-$CONT_VERSION_amd64.deb
-RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-$CONT_VERSION_amd64.deb
+ARG LIBDB_VERSION=4.8.30.NC
+ARG CONT_VERSION
+ARG BITCOIN_VERSION
+COPY --from=builder-amd64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
+COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
+RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb
+RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
 
 USER bitcoin
 VOLUME ["/bitcoin-data"]
@@ -111,7 +129,6 @@ FROM pre-builder as builder-armv7l
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Build Container (armv7l)"
 
-# This stuff is included build:from 0.3.7 onwards
 USER root
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -119,36 +136,36 @@ RUN apt update && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
 
+# Build boost and libevent
 USER build
-# Build boost and libevent from source for armv7l
-RUN cd /home/build/builds && \
-	git clone  https://github.com/boostorg/boost --recursive
 RUN cd /home/build/builds/boost && \
 	echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
 	cd /home/build/builds/boost && \
 	./bootstrap.sh && \
 	./b2 link=static --with-filesystem --with-system --with-test
-RUN cd /home/build/builds && \
-	git clone https://github.com/libevent/libevent && \
-	cd libevent && \
+RUN cd /home/build/builds/libevent && \
 	./autogen.sh && \
 	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
 		--host=arm-linux-gnueabihf \
 		LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
-	make -j 4
+	make -j 2
 
-# TODO remove - temporary
-USER root
-RUN apt update && \
-        DEBIAN_FRONTEND=noninteractive apt-get remove -y \
-                libboost-dev \
-                libboost-filesystem-dev \
-                libboost-system-dev \
-                libboost-test-dev && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/* && \
-    rm -fr /usr/include/boost
-USER build
+# Build Berkley DB source and create a .deb
+RUN cd /home/build/builds/bitcoin && \
+    ./contrib/install_db4.sh `pwd` --host=arm-linux-gnueabihf
+ARG LIBDB_VERSION=4.8.30.NC
+ARG CONT_VERSION
+RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
+    sudo checkinstall \
+		--pkgname=libdb \
+		--pkgversion=$LIBDB_VERSION \
+		--pkgrelease=$CONT_VERSION \
+		--pkglicense=MIT \
+		--maintainer=piers@piersandkatie.com \
+        --arch=amdhf \
+		-y \
+		--install=no
+RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /home/build/builds/bitcoin
 
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
 RUN cd /home/build/builds/bitcoin && \
@@ -164,7 +181,9 @@ RUN cd /home/build/builds/bitcoin && \
 		--with-boost-system=boost_system \
 		--disable-tests \
 		--with-seccomp=no && \
-	make -j 4
+	make -j 2
+RUN cd /home/builds/builds/bitcoin && \
+    make check
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
