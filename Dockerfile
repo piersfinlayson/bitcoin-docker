@@ -61,8 +61,10 @@ RUN cd /home/build/builds/boost && \
 	./bootstrap.sh && \
 	./b2 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
-	./configure \
-	make
+	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-x86_64-linux-gnu/lib/pkgconfig/ ./configure \
+		--host=x86_64 \
+		LDFLAGS="-L/opt/openssl/openssl-x86_64-linux-gnu/lib/" && \
+	make -j 2
 
 # Build Berkley DB source and create a .deb
 RUN cd /home/build/builds/bitcoin && \
@@ -153,7 +155,7 @@ RUN cd /home/build/builds/libevent && \
 	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
 		--host=arm-linux-gnueabihf \
 		LDFLAGS="-L/opt/openssl/openssl-armv7-linux-gnueabihf/lib/" && \
-	make
+	make -j 2
 
 # Build Berkley DB source and create a .deb
 RUN cd /home/build/builds/bitcoin && \
