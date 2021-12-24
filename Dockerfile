@@ -64,6 +64,8 @@ RUN cd /home/build/builds/bitcoin && \
         LDFLAGS="-L/home/build/builds/bitcoin/db4/lib" && \
 	make -j 4
 RUN cd /home/build/builds/bitcoin && \
+    make check
+RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
 		--pkgversion=$BITCOIN_VERSION \
