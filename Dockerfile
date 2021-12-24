@@ -185,11 +185,12 @@ RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_
 RUN cd /home/build/builds/bitcoin && \
 	BOOST_ROOT=/home/build/builds/boost/ \
         PKG_CONFIG_PATH=/home/build/builds/libevent \
+        LIBS="-levent" \
 		./configure \
 		--with-boost=yes \
 		--host=arm-linux-gnueabihf \
-		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/usr/arm-linux-gnueabihf/lib/ -L/home/build/builds/boost/stage/lib/" \
-		CPPFLAGS="-I/home/build/builds/boost" \
+		LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/arm-linux-gnueabihf/lib/" \
+		CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I/home/build/builds/libevent/include" \
 		--with-boost-filesystem=boost_filesystem \
 		--with-boost-system=boost_system \
 		--disable-tests \
