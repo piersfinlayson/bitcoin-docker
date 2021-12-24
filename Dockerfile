@@ -12,7 +12,7 @@ USER root
 RUN apt update && \
 	DEBIAN_FRONTEND=noninteractive apt-get install -y \
         bsdmainutils \
-		checkinstall \
+		checkinstall && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
 RUN apt update && \
