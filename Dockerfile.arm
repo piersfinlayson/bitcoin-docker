@@ -18,4 +18,5 @@ RUN dpkg --install /home/bitcoin/libevent_1-1_armhf.deb
 
 USER bitcoin
 VOLUME ["/bitcoin-data"]
-CMD ["LD_LIBRARY_PATH=/usr/local/lib", "/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
+ENV LD_LIBRARY_PATH=/usr/local/lib
+CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
