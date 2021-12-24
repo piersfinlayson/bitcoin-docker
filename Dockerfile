@@ -49,8 +49,7 @@ LABEL description="Piers's Bitcoin Node Build Container (amd64)"
 # Build boost and libevent
 USER build
 RUN cd /home/build/builds/boost && \
-	cd /home/build/builds/boost && \
-	./bootstrap.sh
+	./bootstrap.sh && \
 	./b2 link=static --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
 	./configure \
