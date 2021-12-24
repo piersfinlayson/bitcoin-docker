@@ -138,7 +138,7 @@ RUN cd /home/build/builds/bitcoin && \
 		--pkgversion=1 \
 		--pkgrelease=1 \
 		--pkglicense=MIT \
-		--arch=armv7l \
+		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
@@ -148,7 +148,7 @@ RUN cd /home/build/builds/boost && \
 		--pkgversion=1 \
 		--pkgrelease=1 \
 		--pkglicense=MIT \
-		--arch=armv7l \
+		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no \
@@ -159,7 +159,7 @@ RUN cd /home/build/builds/libevent && \
 		--pkgversion=1 \
 		--pkgrelease=1 \
 		--pkglicense=MIT \
-		--arch=armv7l \
+		--arch=armhf \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
