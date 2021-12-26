@@ -160,6 +160,7 @@ RUN dpkg --install /home/bitcoin/libevent_$BITCOIN_VERSION-${CONT_VERSION}_amd64
 RUN dpkg --install /home/bitcoin/libboost_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
 
 USER bitcoin
+EXPOSE 8333/tcp
 VOLUME ["/bitcoin-data"]
 CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
 
