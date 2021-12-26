@@ -183,8 +183,7 @@ USER build
 RUN cd /home/build/builds/boost && \
 	echo "using gcc : arm : arm-linux-gnueabihf-g++ ;" > /home/build/user-config.jam && \
 	./bootstrap.sh && \
-    ./b2 toolset=gcc-arm && \
-	./b2 --with-filesystem --with-system --with-test
+    ./b2 toolset=gcc-arm --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
 	LIBS="-ldl" PKG_CONFIG_PATH=/opt/openssl/openssl-armv7-linux-gnueabihf/lib/pkgconfig/ ./configure \
 		--host=arm-linux-gnueabihf \
@@ -248,7 +247,7 @@ RUN cd /home/build/builds/boost && \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no \
-		./b2 install --with-filesystem --with-system --with-test --prefix=/usr
+		./b2 install toolset=gcc-arm --with-filesystem --with-system --with-test --prefix=/usr
 RUN cd /home/build/builds/libevent && \
 	sudo checkinstall \
 		--pkgname=libevent \
