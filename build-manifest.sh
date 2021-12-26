@@ -17,7 +17,7 @@ else
 	echo Building container version $CONT_VERSION
 fi
 
-docker login
+docker login -u piersfinlayson
 
 # Create VERSION manifest
 docker manifest create -a piersfinlayson/bitcoin:${CONT_VERSION} piersfinlayson/bitcoin-amd64:${CONT_VERSION} piersfinlayson/bitcoin-armv7l:${CONT_VERSION}
