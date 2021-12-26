@@ -16,6 +16,13 @@ then
 else
 	echo Building container version $CONT_VERSION
 fi
+ARCH=`arch`
+EXPECTED_ARCH='x86_64'
+if [ "x$ARCH" != "x$EXPECTED_ARCH" ]
+then
+    echo Must be run on an $EXPECTED_ARCH platform - this is an $ARCH platform
+    exit
+fi
 
 # Forcibly get the latest build container
 docker pull piersfinlayson/build:latest

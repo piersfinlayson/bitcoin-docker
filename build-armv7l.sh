@@ -16,6 +16,13 @@ then
 else
 	echo Building container version $CONT_VERSION
 fi
+ARCH=`arch`
+EXPECTED_ARCH='armv7l'
+if [ 'x$ARCH' != 'x$EXPECTED_ARCH' ]
+then
+    echo Must be run on an $EXPECTED_ARCH platform - this is an $ARCH platform
+    exit
+fi
 docker pull piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
 docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-armv7l -t piersfinlayson/bitcoin-armv7l:$CONT_VERSION -f Dockerfile.arm .
 docker tag piersfinlayson/bitcoin-armv7l:$CONT_VERSION piersfinlayson/bitcoin-armv7l:latest
