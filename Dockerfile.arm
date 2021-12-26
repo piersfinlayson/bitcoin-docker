@@ -21,6 +21,7 @@ COPY --from=bitcoin-image-only-armv7l /libdb_$LIBDB_VERSION-${CONT_VERSION}_armh
 RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
 RUN dpkg --install /home/bitcoin/libboost_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
 RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb
+RUN dpkg --install /home/bitcoin/libevent_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
 
 USER bitcoin
 EXPOSE 8333/tcp
