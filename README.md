@@ -1,10 +1,10 @@
 # bitcoin-docker
 
 ## First on x86
-./build.amd64.sh VERSION
+./build-amd64.sh VERSION
 
 ## Then on arm
-./build.armv7l.sh VERSION
+./build-armv7l.sh VERSION
 
 ## Then build manifests
 ./build-manifest.sh

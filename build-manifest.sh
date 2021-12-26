@@ -3,7 +3,7 @@ set -e
 BITCOIN_VERSION=$1
 if [ -z $BITCOIN_VERSION ]
 then
-	echo "Usage build.manifest.sh BITCOIN_VERSION CONTAINER_VERSION"
+	echo "Usage build-manifest.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
 else
 	echo Building bitcoin version $BITCOIN_VERSION
@@ -11,7 +11,7 @@ fi
 CONT_VERSION=$2
 if [ -z $CONT_VERSION ]
 then
-	echo "Usage build.manifest.sh BITCOIN_VERSION CONTAINER_VERSION"
+	echo "Usage build-manifest.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
 else
 	echo Building container version $CONT_VERSION
