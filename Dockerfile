@@ -237,6 +237,10 @@ RUN cd /home/build/builds/bitcoin && \
 		--maintainer=piers@piersandkatie.com \
 		-y \
 		--install=no
+# For sudo b2 install to work need to put user-config.jam with arm gcc in /root
+USER root
+RUN cp /home/build/user-config.jam /root
+USER build
 RUN cd /home/build/builds/boost && \
 	sudo checkinstall \
 		--pkgname=libboost \
