@@ -223,7 +223,7 @@ RUN cd /home/build/builds/bitcoin && \
 # Needed to fix https://github.com/bitcoin/bitcoin/pull/23607
 RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
 RUN	cd /home/build/builds/bitcoin && make -j 2
-RUN cd /home/builds/builds/bitcoin && \
+RUN cd /home/build/builds/bitcoin && \
     make check
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
