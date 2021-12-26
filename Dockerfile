@@ -194,7 +194,6 @@ RUN cd /home/build/builds/bitcoin && \
     ./contrib/install_db4.sh `pwd` --host=arm-linux-gnueabihf
 ARG LIBDB_VERSION=4.8.30.NC
 ARG CONT_VERSION
-ARG BITCOIN_VERSION
 RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
     sudo checkinstall \
 		--pkgname=libdb \
@@ -226,6 +225,7 @@ RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' 
 RUN	cd /home/build/builds/bitcoin && make -j 2
 RUN cd /home/build/builds/bitcoin && \
     make check
+ARG BITCOIN_VERSION
 RUN cd /home/build/builds/bitcoin && \
 	sudo checkinstall \
 		--pkgname=bitcoin \
