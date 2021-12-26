@@ -5,7 +5,7 @@ A container with bitcoin, libboost and libevent built from source, available for
 ## Building
 
 ### Inputs
-BITCOIN_VERSION, must be a valid branch of git@github.com:bitcoin/bitcoin.git - e.g. 22.x
+BITCOIN_VERSION, must be a valid branch of https://github.com/bitcoin/bitcoin - e.g. 22.x
 
 CONT_VERSION, container version - uses convention BITCOIN_VERSION.xx, where xx is container build number for that version of bitcoin (so e.g. 22.x.01)
 
