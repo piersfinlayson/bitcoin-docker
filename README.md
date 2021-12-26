@@ -5,5 +5,10 @@
 
 ## Then on arm
 ./build.armv7l.sh VERSION
-## To run the bitcoin node (on arm)
-docker run -d --restart always --name bitcoin -p 8333:8333 -v /usb/bitcoin-data:/bitcoin-data piersfinlayson/bitcoin-armv7l:VERSION
+
+## Then build manifests
+./build-manifest.sh
+
+## To run the bitcoin node
+docker pull piersfinlayson/bitcoin:latest
+docker run -d --restart always --name bitcoin -p 8333:8333 -v /usb/bitcoin-data:/bitcoin-data piersfinlayson/bitcoin:latest
