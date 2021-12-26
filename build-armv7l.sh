@@ -18,7 +18,7 @@ else
 fi
 ARCH=`arch`
 EXPECTED_ARCH='armv7l'
-if [ 'x$ARCH' != 'x$EXPECTED_ARCH' ]
+if [ "x$ARCH" != "x$EXPECTED_ARCH" ]
 then
     echo Must be run on an $EXPECTED_ARCH platform - this is an $ARCH platform
     exit
