@@ -22,3 +22,6 @@ docker tag piersfinlayson/bitcoin-armv7l:$CONT_VERSION piersfinlayson/bitcoin-ar
 docker login -u piersfinlayson
 docker push piersfinlayson/bitcoin-armv7l:$CONT_VERSION
 docker push piersfinlayson/bitcoin-armv7l:latest
+
+echo Now you need to build the manifests using the following command:
+echo ./build-manifest.sh $BITCOIN_VERSION $CONT_VERSION
