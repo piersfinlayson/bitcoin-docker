@@ -1,6 +1,9 @@
 #
 # arm32v7l version of bitcoin container
 #
+ARG BITCOIN_VERSION
+ARG CONT_VERSION
+ARG LIBDB_VERSION=4.8.30.NC
 FROM piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
 FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
 
