@@ -44,6 +44,7 @@ build_container() {
         -f $2 \
         .
 }
+
 tag_container() {
     docker tag \
         piersfinlayson/$1:$CONT_VERSION \
