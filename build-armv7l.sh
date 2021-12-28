@@ -6,6 +6,9 @@ EXPECTED_ARCH='armv7l'
 
 BITCOIN_VERSION=$1
 CONT_VERSION=$2
+EXTRA_ARG=$3
+check_args
+check_arch $EXPECTED_ARCH
 
 . ./DEPENDENCIES.sh
 

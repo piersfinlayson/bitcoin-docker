@@ -2,12 +2,11 @@
 set -e
 source "build-utils.sh"
 
-EXPECTED_ARCH='x86_64'
-
 BITCOIN_VERSION=$1
 CONT_VERSION=$2
+EXTRA_ARG=$3
 check_args
-check_arch $EXPECTED_ARCH
+check_arch x86_64
 
 . ./DEPENDENCIES.sh
 
@@ -18,12 +17,12 @@ output_versions
 docker pull piersfinlayson/build:latest
 
 # Build the amd64 version - including latest
-build_container bitcoin-amd64 Dockerfile
+build_container bitcoin-amd64 Dockerfile $EXTRA_ARG
 tag_container bitcoin_amd64
 echo "Successfully built and tagged piersfinlayson/bitcoin-amd64:$CONT_VERSION"
 
 # Build the armv7l image only version - don't bother with latest
-build_container bitcoin-image-only-armv7l Dockerfile
+build_container bitcoin-image-only-armv7l Dockerfile $EXTRA_ARG
 echo "Successfully built piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION"
 
 # Push both versions

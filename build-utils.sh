@@ -1,13 +1,14 @@
 #!/bin/bash
 check_args() {
+    USAGE="Usage build-arch.sh BITCOIN_VERSION CONTAINER_VERSION [optional extra docker build arg]"
     if [ -z $BITCOIN_VERSION ]
     then
-        echo "Usage build-arch.sh BITCOIN_VERSION CONTAINER_VERSION"
+        echo $USAGE
         exit
     fi
     if [ -z $CONT_VERSION ]
     then
-        echo "Usage build-arch.sh BITCOIN_VERSION CONTAINER_VERSION"
+        echo $USAGE
         exit
     fi
 }
@@ -42,6 +43,7 @@ build_container() {
         --target $1 \
         -t piersfinlayson/$1:$CONT_VERSION \
         -f $2 \
+        $EXTRA_ARG \
         .
 }
 
