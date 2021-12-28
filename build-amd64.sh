@@ -5,16 +5,12 @@ if [ -z $BITCOIN_VERSION ]
 then
 	echo "Usage build-arch.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
-else
-	echo Building bitcoin version $BITCOIN_VERSION
 fi
 CONT_VERSION=$2
 if [ -z $CONT_VERSION ]
 then
 	echo "Usage build-arch.sh BITCOIN_VERSION CONTAINER_VERSION"
 	exit
-else
-	echo Building container version $CONT_VERSION
 fi
 ARCH=`arch`
 EXPECTED_ARCH='x86_64'
@@ -25,6 +21,14 @@ then
 fi
 
 . ./DEPENDENCIES.sh
+
+echo "Building bitcoin container $CONT_VERSION for amd64 and pre-armv7l"
+echo "Dependency versions:"
+echo "  bitcoin:   $BITCOIN_VERSION"
+echo "  libdb:     $LIBDB_VERSION"
+echo "  libevent:  $LIBEVENT_VERSION"
+echo "  libzmq:    $LIBZMQ_VERSION"
+echo "  boost:     $BOOST_VERSION"
 
 # Forcibly get the latest build container
 docker pull piersfinlayson/build:latest
