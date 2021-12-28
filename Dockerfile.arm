@@ -1,18 +1,18 @@
 #
 # arm32v7l version of bitcoin container
 #
-FROM piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
-FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
-
-LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
-LABEL description="Piers's Bitcoin Node Container (armv7l)"
-
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
 ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+
+FROM piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
+FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
+
+LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
+LABEL description="Piers's Bitcoin Node Container (armv7l)"
 
 RUN useradd -ms /bin/false bitcoin
 
