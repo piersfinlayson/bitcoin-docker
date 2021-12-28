@@ -33,7 +33,7 @@ docker pull piersfinlayson/build:latest
 docker build \
     --progress=plain \
     --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
-    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBDB_VERSION=$LIBDB_VERSION \
     --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
     --build-arg BOOST_VERSION=$BOOST_VERSION \
     --build-arg CONT_VERSION=$CONT_VERSION \
@@ -48,7 +48,7 @@ echo "Successfully built piersfinlayson/bitcoin-amd64:$CONT_VERSION"
 docker build \
     --progress=plain \
     --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
-    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBDB_VERSION=$LIBDB_VERSION \
     --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
     --build-arg BOOST_VERSION=$BOOST_VERSION \
     --build-arg CONT_VERSION=$CONT_VERSION \

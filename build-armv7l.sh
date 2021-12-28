@@ -30,7 +30,7 @@ docker pull piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
 docker build \
     --progress=plain \
     --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
-    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBDB_VERSION=$LIBD_VERSION \
     --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
     --build-arg BOOST_VERSION=$BOOST_VERSION \
     --build-arg CONT_VERSION=$CONT_VERSION \
