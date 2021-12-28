@@ -322,6 +322,16 @@ RUN cd /home/build/builds/libevent && \
         --maintainer=piers@piersandkatie.com \
         -y \
         --install=no
+RUN cd /home/build/builds/libzmq && \
+    sudo checkinstall \
+        --pkgname=libzmq \
+        --pkgversion=$LIBZMQ_VERSION \
+        --pkgrelease=$CONT_VERSION \
+        --pkglicense="GPLv3" \
+        --arch=armhf \
+        --maintainer=piers@piersandkatie.com \
+        -y \
+        --install=yes
 
 #
 # Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
