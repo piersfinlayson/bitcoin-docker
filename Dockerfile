@@ -331,7 +331,7 @@ RUN cd /home/build/builds/libzmq && \
         --arch=armhf \
         --maintainer=piers@piersandkatie.com \
         -y \
-        --install=yes
+        --install=no
 
 #
 # Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
@@ -347,5 +347,5 @@ COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-$
 COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb /
+COPY --from=builder-armv7l /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb /
 
