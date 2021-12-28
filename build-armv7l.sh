@@ -49,3 +49,6 @@ docker push piersfinlayson/bitcoin-armv7l:latest
 
 echo Now you need to build the manifests using the following command:
 echo ./build-manifest.sh $BITCOIN_VERSION $CONT_VERSION
+
+echo Also, tag the piersfinlayson/bitcoin-docker repo as follows:
+echo 'git tag -a ${CONT_VERSION} -m "Container version: ${CONT_VERSION}\nBitcoin version: ${BITCOIN_VERSION}\nlibevent version: ${LIBEVENT_VERSION}\nlibdb version: ${LIBDB_VERSION}\nlibzmq version: ${LIBZMQ_VERSION}\nboost version: ${BOOST_VERSION} && git push origin ${CONT_VERSION}'
