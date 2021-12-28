@@ -24,17 +24,39 @@ then
     exit
 fi
 
+. ./DEPENDENCIES.sh
+
 # Forcibly get the latest build container
 docker pull piersfinlayson/build:latest
 
 # Build the amd64 version - including latest
-docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-amd64 -t piersfinlayson/bitcoin-amd64:$CONT_VERSION .
+docker build \
+    --progress=plain \
+    --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
+    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
+    --build-arg BOOST_VERSION=$BOOST_VERSION \
+    --build-arg CONT_VERSION=$CONT_VERSION \
+    --build-arg BITCOIN_VERSION=$BITCOIN_VERSION \
+    --target bitcoin-amd64 \
+    -t piersfinlayson/bitcoin-amd64:$CONT_VERSION \
+    .
 docker tag piersfinlayson/bitcoin-amd64:$CONT_VERSION piersfinlayson/bitcoin-amd64:latest
-echo "!!! Built piersfinlayson/bitcoin-amd64:$CONT_VERSION"
+echo "Successfully built piersfinlayson/bitcoin-amd64:$CONT_VERSION"
 
 # Build the armv7l image only version - don't bother with latest
-docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-image-only-armv7l -t piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION .
-echo "!!! Built piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION"
+docker build \
+    --progress=plain \
+    --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
+    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
+    --build-arg BOOST_VERSION=$BOOST_VERSION \
+    --build-arg CONT_VERSION=$CONT_VERSION \
+    --build-arg BITCOIN_VERSION=$BITCOIN_VERSION \
+    --target bitcoin-image-only-armv7l  \
+    -t piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION \
+    .
+echo "Successfully built piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION"
 
 # Push both versions
 docker login -u piersfinlayson

@@ -23,8 +23,22 @@ then
     echo Must be run on an $EXPECTED_ARCH platform - this is an $ARCH platform
     exit
 fi
+
+. ./DEPENDENCIES.sh
+
 docker pull piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
-docker build --progress=plain --build-arg CONT_VERSION=$CONT_VERSION --build-arg BITCOIN_VERSION=$BITCOIN_VERSION --target bitcoin-armv7l -t piersfinlayson/bitcoin-armv7l:$CONT_VERSION -f Dockerfile.arm .
+docker build \
+    --progress=plain \
+    --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
+    --build-arg LIBDB_VERSION=$LIBDBVERSION \
+    --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
+    --build-arg BOOST_VERSION=$BOOST_VERSION \
+    --build-arg CONT_VERSION=$CONT_VERSION \
+    --build-arg BITCOIN_VERSION=$BITCOIN_VERSION \
+    --target bitcoin-armv7l \
+    -t piersfinlayson/bitcoin-armv7l:$CONT_VERSION \
+    -f Dockerfile.arm \
+    .
 docker tag piersfinlayson/bitcoin-armv7l:$CONT_VERSION piersfinlayson/bitcoin-armv7l:latest
 docker login -u piersfinlayson
 docker push piersfinlayson/bitcoin-armv7l:$CONT_VERSION

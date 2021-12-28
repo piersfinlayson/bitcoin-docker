@@ -3,7 +3,10 @@
 #
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
-ARG LIBDB_VERSION=4.8.30.NC
+ARG LIBDB_VERSION
+ARG LIBEVENT_VERSION
+ARG LIBZMQ_VERSION
+ARG BOOST_VERSION
 FROM piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
 FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
 
@@ -13,15 +16,16 @@ LABEL description="Piers's Bitcoin Node Container (armv7l)"
 RUN useradd -ms /bin/false bitcoin
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
-ARG LIBDB_VERSION=4.8.30.NC
 COPY --from=bitcoin-image-only-armv7l /bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
-COPY --from=bitcoin-image-only-armv7l /libboost_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
-COPY --from=bitcoin-image-only-armv7l /libevent_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-armv7l /libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-armv7l /libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
 COPY --from=bitcoin-image-only-armv7l /libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-armv7l /libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb /home/bitcoin/
 RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
-RUN dpkg --install /home/bitcoin/libboost_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
+RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb
+RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb
 RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb
-RUN dpkg --install /home/bitcoin/libevent_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb
+RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb
 
 USER bitcoin
 EXPOSE 8333/tcp
