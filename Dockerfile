@@ -155,7 +155,7 @@ RUN cd /home/build/builds/bitcoin && \
         --host=x86_64 \
         BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
         EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include"
-RUN    cd /home/build/builds/bitcoin && \
+RUN cd /home/build/builds/bitcoin && \
     make -j 4
 #ENV LD_LIBRARY_PATH=/usr/local/lib
 #RUN cd /home/build/builds/bitcoin && \
@@ -260,26 +260,29 @@ RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
         --install=no
 RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /home/build/builds/bitcoin
 
-RUN need to add libzmq include and libs to bitcoin build
-RUN need to do proper db4 stuff
-
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
+ENV BDB_PREFIX='/home/build/builds/bitcoin/db4'
+ENV EVENT_PREFIX='/home/build/builds/libevent'
+ENV ZMQ_PREFIX='/home/build/builds/libzmq'
 RUN cd /home/build/builds/bitcoin && \
     BOOST_ROOT=/home/build/builds/boost/ \
-        PKG_CONFIG_PATH=/home/build/builds/libevent \
-        LIBS="-levent" \
+        PKG_CONFIG_PATH="/home/build/builds/libevent:/home/build/builds/libzmq" \
         ./configure \
         --with-boost=yes \
         --host=arm-linux-gnueabihf \
-        LDFLAGS="-L/home/build/builds/libevent/.libs/ -L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/arm-linux-gnueabihf/lib/" \
-        CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I/home/build/builds/libevent/include" \
+        BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
+        EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
+        ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
+        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/arm-linux-gnueabihf/lib/" \
+        CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I${EVENT_PREFIX}/include" \
         --with-boost-filesystem=boost_filesystem \
         --with-boost-system=boost_system \
         --disable-tests \
+        --enable-zmq \
         --with-seccomp=no
-# Needed to fix https://github.com/bitcoin/bitcoin/pull/23607
-RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
-RUN    cd /home/build/builds/bitcoin && make -j 4
+# Needed to fix https://github.com/bitcoin/bitcoin/pull/23607 
+# RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
+RUN cd /home/build/builds/bitcoin && make -j 4
 # Note that we don't build tests above, and we're cross-compiling, so make check doesn't do anything useful
 #RUN cd /home/build/builds/bitcoin && \
 #    LD_LIBRARY_PATH=/home/build/builds/boost/stage/lib \
