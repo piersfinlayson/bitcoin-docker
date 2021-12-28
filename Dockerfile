@@ -242,7 +242,7 @@ RUN cd /home/build/builds/libevent && \
     make -j 4
 RUN cd /home/build/builds/libzmq && \
     ./configure \
-        --host=arm-linux-gnueabihf \
+        --host=arm-linux-gnueabihf && \
     make -j 4 
 
 # Build Berkley DB source and create a .deb
