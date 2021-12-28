@@ -2,13 +2,11 @@
 set -e
 source "build-utils.sh"
 
-EXPECTED_ARCH='armv7l'
-
 BITCOIN_VERSION=$1
 CONT_VERSION=$2
 EXTRA_ARG=$3
 check_args
-check_arch $EXPECTED_ARCH
+check_arch armv7l
 
 . ./DEPENDENCIES.sh
 
@@ -17,7 +15,7 @@ output_versions
 
 # Get the container already built on amd64 containing arm images
 docker pull piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
-build_container bitcoin-armv7l Dockerfile.arm
+build_container bitcoin-armv7l Dockerfile.arm $EXTRA_ARG
 tag_container bitcoin-armv7l
 echo "Successfully built and tagged piersfinlayson/bitcoin-armv7l:$CONT_VERSION"
 
