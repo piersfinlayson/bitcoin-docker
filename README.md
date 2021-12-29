@@ -40,10 +40,10 @@ The ```-p 8333:8333``` is optional - only required if you want to be able to be 
 
 If stopping and restarting (e.g. to upgrade), give some time for the node to shutdown gracefully, e.g.:
 ```
-docker stop -t 60 my_bitcoin_container_name
+docker stop -t 3600 my_bitcoin_container_name
 ```
 or
 ```
-docker restart -t 60 my_bitcoin_container_name
+docker restart -t 3600 my_bitcoin_container_name
 ```
 If you don't use the -t flag docker will give the container 10s by default before performing an immediate kill.
