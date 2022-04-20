@@ -18,7 +18,7 @@ docker pull piersfinlayson/build:latest
 
 # Build the amd64 version - including latest
 build_container bitcoin-amd64 Dockerfile $EXTRA_ARG
-tag_container bitcoin_amd64
+tag_container bitcoin-amd64
 echo "Successfully built and tagged piersfinlayson/bitcoin-amd64:$CONT_VERSION"
 
 # Build the armv7l image only version - don't bother with latest
