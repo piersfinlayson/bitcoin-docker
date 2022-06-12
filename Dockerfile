@@ -428,7 +428,7 @@ RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
         --arch=arm64 \
         -y \
         --install=no
-RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_aarch64.deb /home/build/builds/bitcoin
+RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb /home/build/builds/bitcoin
 
 # Now build bitcoin with the aarch64 boost (already got source in pre-builder)
 ENV BDB_PREFIX='/home/build/builds/bitcoin/db4'
@@ -513,8 +513,8 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
-COPY --from=builder-aarch64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_aarch64.deb /
-COPY --from=builder-aarch64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_aarch64.deb /
-COPY --from=builder-aarch64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_aarch64.deb /
-COPY --from=builder-aarch64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_aarch64.deb /
-COPY --from=builder-aarch64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_aarch64.deb /
+COPY --from=builder-aarch64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb /
+COPY --from=builder-aarch64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb /
+COPY --from=builder-aarch64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb /
+COPY --from=builder-aarch64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb /
+COPY --from=builder-aarch64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb /
