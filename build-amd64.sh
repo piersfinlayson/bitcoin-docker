@@ -10,7 +10,7 @@ check_arch x86_64
 
 . ./DEPENDENCIES.sh
 
-echo "Building bitcoin container $CONT_VERSION for amd64 and pre-armv7l"
+echo "Building bitcoin container $CONT_VERSION for amd64, pre-armv7l and pre-aarch64"
 output_versions
 
 # Forcibly get the latest build container
@@ -25,10 +25,17 @@ echo "Successfully built and tagged piersfinlayson/bitcoin-amd64:$CONT_VERSION"
 build_container bitcoin-image-only-armv7l Dockerfile $EXTRA_ARG
 echo "Successfully built piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION"
 
+# Build the aarch64 image only version - don't bother with latest
+build_container bitcoin-image-only-aarch64 Dockerfile $EXTRA_ARG
+echo "Successfully built piersfinlayson/bitcoin-image-only-aarch64:$CONT_VERSION"
+
 # Push both versions
 docker login -u piersfinlayson
 docker push piersfinlayson/bitcoin-amd64:$CONT_VERSION
 docker push piersfinlayson/bitcoin-amd64:latest
 docker push piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION
+docker push piersfinlayson/bitcoin-image-only-aarch64:$CONT_VERSION
 echo Now you need to build the armv7l version on an armv7l machine using the following command:
 echo ./build-armv7l.sh $BITCOIN_VERSION $CONT_VERSION
+echo Now you need to build the aarch64 version on an aarch64 machine using the following command:
+echo ./build-aarch64.sh $BITCOIN_VERSION $CONT_VERSION

@@ -1,0 +1,36 @@
+#
+# aarch64 version of bitcoin container
+#
+ARG CONT_VERSION
+
+FROM piersfinlayson/bitcoin-image-only-aarch64:$CONT_VERSION as bitcoin-image-only-aarch64
+FROM arm64/ubuntu:20.04 as bitcoin-aarch64
+
+LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
+LABEL description="Piers's Bitcoin Node Container (aarch64)"
+
+ARG BITCOIN_VERSION
+ARG CONT_VERSION
+ARG LIBDB_VERSION
+ARG LIBEVENT_VERSION
+ARG LIBZMQ_VERSION
+ARG BOOST_VERSION
+
+RUN useradd -ms /bin/false bitcoin
+
+COPY --from=bitcoin-image-only-aarch64 /bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_aarch64.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-aarch64 /libboost_$BOOST_VERSION-${CONT_VERSION}_aarch64.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-aarch64 /libevent_$LIBEVENT_VERSION-${CONT_VERSION}_aarch64.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-aarch64 /libdb_$LIBDB_VERSION-${CONT_VERSION}_aarch64.deb /home/bitcoin/
+COPY --from=bitcoin-image-only-aarch64 /libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_aarch64.deb /home/bitcoin/
+RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_aarch64.deb
+RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_aarch64.deb
+RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_aarch64.deb
+RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_aarch64.deb
+RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_aarch64.deb
+
+USER bitcoin
+EXPOSE 8333/tcp
+VOLUME ["/bitcoin-data"]
+ENV LD_LIBRARY_PATH=/usr/local/lib
+CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
