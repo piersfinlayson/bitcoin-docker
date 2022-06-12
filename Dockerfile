@@ -425,7 +425,7 @@ RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
         --pkgrelease=$CONT_VERSION \
         --pkglicense="Berkeley DB v4 License" \
         --maintainer=piers@piersandkatie.com \
-        --arch=aarch64 \
+        --arch=arm64 \
         -y \
         --install=no
 RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_aarch64.deb /home/build/builds/bitcoin
@@ -463,7 +463,7 @@ RUN cd /home/build/builds/bitcoin && \
         --pkgversion=$BITCOIN_VERSION \
         --pkgrelease=$CONT_VERSION \
         --pkglicense=MIT \
-        --arch=aarch64 \
+        --arch=arm64 \
         --maintainer=piers@piersandkatie.com \
         -y \
         --install=no
@@ -477,7 +477,7 @@ RUN cd /home/build/builds/boost && \
         --pkgversion=$BOOST_VERSION \
         --pkgrelease=$CONT_VERSION \
         --pkglicense="Boost Software License" \
-        --arch=aarch64 \
+        --arch=arm64 \
         --maintainer=piers@piersandkatie.com \
         -y \
         --install=no \
@@ -488,7 +488,7 @@ RUN cd /home/build/builds/libevent && \
         --pkgversion=$LIBEVENT_VERSION \
         --pkgrelease=$CONT_VERSION \
         --pkglicense="3-clause BSD" \
-        --arch=aarch64 \
+        --arch=arm64 \
         --maintainer=piers@piersandkatie.com \
         -y \
         --install=no
@@ -498,7 +498,7 @@ RUN cd /home/build/builds/libzmq && \
         --pkgversion=$LIBZMQ_VERSION \
         --pkgrelease=$CONT_VERSION \
         --pkglicense="GPLv3" \
-        --arch=aarch64 \
+        --arch=arm64 \
         --maintainer=piers@piersandkatie.com \
         -y \
         --install=no
