@@ -4,7 +4,7 @@
 ARG CONT_VERSION
 
 FROM piersfinlayson/bitcoin-image-only-aarch64:$CONT_VERSION as bitcoin-image-only-aarch64
-FROM arm64v8/ubuntu:20.04 as bitcoin-aarch64
+FROM arm64v8/ubuntu:20.04 as bitcoin-aarch64-temp
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container (aarch64)"
@@ -28,6 +28,10 @@ RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.d
 RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb
 RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb
+RUN rm -fr /home/bitcoin/*.deb
+
+FROM scratch as bitcoin-aarch64
+COPY --from=bitcoin-aarch64-temp / /
 
 USER bitcoin
 EXPOSE 8333/tcp
