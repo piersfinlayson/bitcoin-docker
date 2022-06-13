@@ -4,7 +4,7 @@
 ARG CONT_VERSION
 
 FROM piersfinlayson/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
-FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l
+FROM arm32v7/ubuntu:20.04 as bitcoin-armv7l-temp
 
 LABEL maintainer="Piers Finlayson <piers@piersandkatie.com>"
 LABEL description="Piers's Bitcoin Node Container (armv7l)"
@@ -28,6 +28,10 @@ RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.d
 RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb
 RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb
+RUN rm -fr /home/bitcoin/*.deb
+
+FROM scratch as bitcoin-armv7l
+COPY --from=bitcoin-armv7l-temp / /
 
 USER bitcoin
 EXPOSE 8333/tcp
