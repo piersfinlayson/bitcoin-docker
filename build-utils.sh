@@ -29,6 +29,7 @@ output_versions() {
     echo "  libevent:  $LIBEVENT_VERSION"
     echo "  libzmq:    $LIBZMQ_VERSION"
     echo "  boost:     $BOOST_VERSION"
+    echo "  openssl:   $BC_OPENSSL_VERSION"
 }
 
 build_container() {
@@ -40,6 +41,7 @@ build_container() {
         --build-arg BOOST_VERSION=$BOOST_VERSION \
         --build-arg CONT_VERSION=$CONT_VERSION \
         --build-arg BITCOIN_VERSION=$BITCOIN_VERSION \
+        --build-arg BC_OPENSSL_VERSION=$BC_OPENSSL_VERSION \
         --target $1 \
         -t piersfinlayson/$1:$CONT_VERSION \
         -f $2 \

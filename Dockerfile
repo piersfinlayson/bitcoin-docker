@@ -31,6 +31,7 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
 
 # Get boost source
 USER build
@@ -84,6 +85,7 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
 
 # Build boost, libevent and libzmq, install oost and create .debs for both
 USER build
@@ -184,6 +186,7 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
 
 RUN useradd -ms /bin/false bitcoin 
 RUN apt update && \
@@ -221,6 +224,7 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
 
 USER root
 RUN apt update && \
@@ -343,6 +347,8 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
+
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb /
@@ -363,6 +369,7 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
 
 USER root
 RUN apt update && \
@@ -383,13 +390,12 @@ ENV PLATFORM=aarch64-linux-gnu
 ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-aarch64"
 ENV TARGET_DIR=$TMP_OPENSSL_DIR/openssl-$PLATFORM
 ENV TMP_OPENSSL_DIR=/tmp/openssl
-ENV OPENSSL_VERSION="1.1.1o"
 RUN mkdir -p $TMP_OPENSSL_DIR && \
     cd $TMP_OPENSSL_DIR && \
-    wget https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz && \
-    tar xzf openssl-$OPENSSL_VERSION.tar.gz && \
-    rm openssl-$OPENSSL_VERSION.tar.gz && \
-    mv openssl-$OPENSSL_VERSION openssl-src
+    wget https://www.openssl.org/source/openssl-${BC_OPENSSL_VERSION}.tar.gz && \
+    tar xzf openssl-${BC_OPENSSL_VERSION}.tar.gz && \
+    rm openssl-${BC_OPENSSL_VERSION}.tar.gz && \
+    mv openssl-${BC_OPENSSL_VERSION} openssl-src
 RUN cd ~/ && \
     cp -pr $TMP_OPENSSL_DIR/openssl-src working && \
     cd working && \
@@ -513,6 +519,8 @@ ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
+ARG BC_OPENSSL_VERSION
+
 COPY --from=builder-aarch64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb /
 COPY --from=builder-aarch64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb /
 COPY --from=builder-aarch64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb /
