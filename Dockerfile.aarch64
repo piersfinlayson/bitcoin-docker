@@ -11,7 +11,6 @@ LABEL description="Piers's Bitcoin Node Container (aarch64)"
 
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -22,12 +21,10 @@ RUN useradd -ms /bin/false bitcoin
 COPY --from=bitcoin-image-only-aarch64 /bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb /home/bitcoin/
 COPY --from=bitcoin-image-only-aarch64 /libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb /home/bitcoin/
 COPY --from=bitcoin-image-only-aarch64 /libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb /home/bitcoin/
-COPY --from=bitcoin-image-only-aarch64 /libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb /home/bitcoin/
 COPY --from=bitcoin-image-only-aarch64 /libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb /home/bitcoin/
 RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb
 RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb
 RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb
-RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb
 RUN rm -fr /home/bitcoin/*.deb
 

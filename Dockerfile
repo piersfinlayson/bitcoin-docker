@@ -27,7 +27,6 @@ RUN apt update && \
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -81,7 +80,6 @@ LABEL description="Piers's Bitcoin Node Build Container (amd64)"
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -132,30 +130,14 @@ RUN cd /home/build/builds/libzmq && \
         -y \
         --install=yes
 
-# Build Berkley DB source and create a .deb
-RUN cd /home/build/builds/bitcoin && \
-    ./contrib/install_db4.sh `pwd`
-RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
-    sudo checkinstall \
-        --pkgname=libdb \
-        --pkgversion=$LIBDB_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Berkeley DB v4 License" \
-        --maintainer=piers@piersandkatie.com \
-        -y \
-        --install=no
-RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb /home/build/builds/bitcoin
-
 # Build bitcoin
 # Have tried adding --with-boost-unit-test-framework=boost_unit_test_framework and BOOST_UNIT_TEST_FRAMEWORK_LIB="-lboost_unit_test_framework", but building with tests still doesn't work, so install boost unit_test_framework above
 # Need to fix https://github.com/bitcoin/bitcoin/pull/23607 if using boost 1.78.0 
 # RUN cd /home/build/builds/bitcoin && sed -i 's/(char\*\*)\&address/\&address/g' src/httpserver.cpp
-ENV BDB_PREFIX='/home/build/builds/bitcoin/db4'
 ENV EVENT_PREFIX='/home/build/builds/libevent'
 RUN cd /home/build/builds/bitcoin && \
         ./configure \
         --host=x86_64 \
-        BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
         EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include"
 RUN cd /home/build/builds/bitcoin && \
     make -j 4
@@ -182,7 +164,6 @@ LABEL description="Piers's Bitcoin Node Container (amd64)"
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -194,12 +175,10 @@ RUN apt update && \
                 bsdmainutils && \
     apt-get clean && \
     rm -fr /var/lib/apt/lists/*
-COPY --from=builder-amd64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 COPY --from=builder-amd64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 COPY --from=builder-amd64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
 COPY --from=builder-amd64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
-RUN dpkg --install /home/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_amd64.deb
@@ -220,7 +199,6 @@ LABEL description="Piers's Bitcoin Node Build Container (armv7l)"
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -249,23 +227,7 @@ RUN cd /home/build/builds/libzmq && \
         --host=arm-linux-gnueabihf && \
     make -j 4 
 
-# Build Berkley DB source and create a .deb
-RUN cd /home/build/builds/bitcoin && \
-    ./contrib/install_db4.sh `pwd` --host=arm-linux-gnueabihf
-RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
-    sudo checkinstall \
-        --pkgname=libdb \
-        --pkgversion=$LIBDB_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Berkeley DB v4 License" \
-        --maintainer=piers@piersandkatie.com \
-        --arch=armhf \
-        -y \
-        --install=no
-RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /home/build/builds/bitcoin
-
 # Now build bitcoin with the armv7l boost (already got source in pre-builder)
-ENV BDB_PREFIX='/home/build/builds/bitcoin/db4'
 ENV EVENT_PREFIX='/home/build/builds/libevent'
 ENV ZMQ_PREFIX='/home/build/builds/libzmq'
 RUN cd /home/build/builds/bitcoin && \
@@ -274,11 +236,10 @@ RUN cd /home/build/builds/bitcoin && \
         ./configure \
         --with-boost=yes \
         --host=arm-linux-gnueabihf \
-        BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
         EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
         ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
-        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/arm-linux-gnueabihf/lib/" \
-        CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I${EVENT_PREFIX}/include" \
+        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/usr/arm-linux-gnueabihf/lib/" \
+        CPPFLAGS="-I/home/build/builds/boost -I${EVENT_PREFIX}/include" \
         --with-boost-filesystem=boost_filesystem \
         --with-boost-system=boost_system \
         --disable-tests \
@@ -343,7 +304,6 @@ RUN cd /home/build/builds/libzmq && \
 FROM scratch as bitcoin-image-only-armv7l
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -352,7 +312,6 @@ ARG BC_OPENSSL_VERSION
 COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_armhf.deb /
 COPY --from=builder-armv7l /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb /
 
 #
@@ -365,7 +324,6 @@ LABEL description="Piers's Bitcoin Node Build Container (aarch64)"
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -421,23 +379,7 @@ RUN cd /home/build/builds/libzmq && \
         --host=aarch64-linux-gnu && \
     make -j 4 
 
-# Build Berkley DB source and create a .deb
-RUN cd /home/build/builds/bitcoin && \
-    ./contrib/install_db4.sh `pwd` --host=aarch64-linux-gnu
-RUN cd /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix && \
-    sudo checkinstall \
-        --pkgname=libdb \
-        --pkgversion=$LIBDB_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Berkeley DB v4 License" \
-        --maintainer=piers@piersandkatie.com \
-        --arch=arm64 \
-        -y \
-        --install=no
-RUN cp /home/build/builds/bitcoin/db4/db-$LIBDB_VERSION/build_unix/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb /home/build/builds/bitcoin
-
 # Now build bitcoin with the aarch64 boost (already got source in pre-builder)
-ENV BDB_PREFIX='/home/build/builds/bitcoin/db4'
 ENV EVENT_PREFIX='/home/build/builds/libevent'
 ENV ZMQ_PREFIX='/home/build/builds/libzmq'
 RUN cd /home/build/builds/bitcoin && \
@@ -446,11 +388,10 @@ RUN cd /home/build/builds/bitcoin && \
         ./configure \
         --with-boost=yes \
         --host=aarch64-linux-gnu \
-        BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
         EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
         ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
-        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/home/build/builds/bitcoin/db4/lib -L/usr/aarch64-linux-gnu/lib/" \
-        CPPFLAGS="-I/home/build/builds/boost -I/home/build/builds/bitcoin/db4/include -I${EVENT_PREFIX}/include" \
+        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/usr/aarch64-linux-gnu/lib/" \
+        CPPFLAGS="-I/home/build/builds/boost -I${EVENT_PREFIX}/include" \
         --with-boost-filesystem=boost_filesystem \
         --with-boost-system=boost_system \
         --disable-tests \
@@ -515,7 +456,6 @@ RUN cd /home/build/builds/libzmq && \
 FROM scratch as bitcoin-image-only-aarch64
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
-ARG LIBDB_VERSION
 ARG LIBEVENT_VERSION
 ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
@@ -524,5 +464,4 @@ ARG BC_OPENSSL_VERSION
 COPY --from=builder-aarch64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb /
 COPY --from=builder-aarch64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb /
 COPY --from=builder-aarch64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb /
-COPY --from=builder-aarch64 /home/build/builds/bitcoin/libdb_$LIBDB_VERSION-${CONT_VERSION}_arm64.deb /
 COPY --from=builder-aarch64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb /

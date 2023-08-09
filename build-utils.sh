@@ -25,7 +25,6 @@ check_arch() {
 output_versions() {
     echo "Dependency versions:"
     echo "  bitcoin:   $BITCOIN_VERSION"
-    echo "  libdb:     $LIBDB_VERSION"
     echo "  libevent:  $LIBEVENT_VERSION"
     echo "  libzmq:    $LIBZMQ_VERSION"
     echo "  boost:     $BOOST_VERSION"
@@ -36,7 +35,6 @@ build_container() {
     docker build \
         --progress=plain \
         --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
-        --build-arg LIBDB_VERSION=$LIBDB_VERSION \
         --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
         --build-arg BOOST_VERSION=$BOOST_VERSION \
         --build-arg CONT_VERSION=$CONT_VERSION \
