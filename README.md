@@ -12,13 +12,13 @@ CONT_VERSION, container version - uses convention BITCOIN_VERSION.xx, where xx i
 ### Step 1 - on x86
 ./build-amd64.sh BITCOIN_VERSION CONT_VERSION
 
-### Step 2 - on armv7 (32-bit raspberry pi, not a zero)
+### Step 2a - on armv7 (32-bit raspberry pi, not a zero)
 ./build-armv7l.sh BITCOIN_VERSION CONT_VERSION
 
-### Step 3 - on arm64 (64-bit raspberry pi, aarch64, armv8)
+### Step 2b - on arm64 (64-bit raspberry pi, aarch64, armv8)
 ./build-aarch64.sh BITCOIN_VERSION CONT_VERSION
 
-### Step 4 - on any architecture
+### Step 3 - on any architecture
 ./build-manifest.sh BITCOIN_VERSION CONT_VERSION
 
 ### Final result
