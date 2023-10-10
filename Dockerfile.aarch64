@@ -28,11 +28,20 @@ RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm6
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb
 RUN rm -fr /home/bitcoin/*.deb
 
-FROM scratch as bitcoin-aarch64
-COPY --from=bitcoin-aarch64-temp / /
+RUN echo -e "Bitcoin Container Version: ${CONT_VERSION}\n"\
+"Architecture: aarch64\n"\
+"Built with software versions: \n"\
+"  bitcoin:  ${BITCOIN_VERSION}\n"\
+"  libevent: ${LIBEVENT_VERSION}\n"\
+"  libzmq:   ${LIBZMQ_VERSION}\n"\
+"  boost:    ${BOOST_VERSION}\n"\
+"  openssl:  ${BC_OPENSSL_VERSION}"\
+    > /versions.txt
+RUN echo "cat /versions.txt; /usr/local/bin/bitcoind -conf=/bitcoin-data/bitcoin.conf" \
+    > /run.sh
 
 USER bitcoin
 EXPOSE 8333/tcp
 VOLUME ["/bitcoin-data"]
 ENV LD_LIBRARY_PATH=/usr/local/lib
-CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
+CMD ["/bin/sh", "-c", "/run.sh"]
