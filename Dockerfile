@@ -396,7 +396,7 @@ ARG ARM_TOOLCHAIN_VERSION
 USER build
 
 # Get ARM toolchain
-ENV ARM_TOOLCHAIN_TARGET="aarch64-none-linux-gnueabihf"
+ENV ARM_TOOLCHAIN_TARGET="aarch64-none-linux-gnu"
 ENV ARM_TOOLCHAIN="arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-${ARM_TOOLCHAIN_TARGET}"
 ENV ARM_TOOLCHAIN_URL_PREFIX="https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_TOOLCHAIN_VERSION}/binrel"
 ENV ARM_TOOLCHAIN_TAR="${ARM_TOOLCHAIN}.tar"
@@ -411,7 +411,7 @@ ENV ARM_TOOLCHAIN_DIR=/home/build/builds/${ARM_TOOLCHAIN}
 ENV ARM_TOOLCHAIN_BIN_PREFIX=${ARM_TOOLCHAIN_DIR}/bin/${ARM_TOOLCHAIN_TARGET}
 
 # Build OpenSSL
-ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-armv4 -march=armv8-a -mfpu=vfpv3-d16 -mfloat-abi=hard"
+ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-aarch64 -march=armv8-a+crc+simd+fp"
 ENV TARGET_DIR=$TMP_OPENSSL_DIR/openssl-${ARM_TOOLCHAIN_TARGET}
 RUN cd ~/ && \
     cp -pr $TMP_OPENSSL_DIR/openssl-src working && \
@@ -430,14 +430,14 @@ RUN cd /home/build/builds/boost && \
     ./b2 -j 4 toolset=gcc-aarch64 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
     LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib/pkgconfig/ ./configure \
-        --host=aarch64-linux-gnueabihf \
+        --host=aarch64-linux-gnu \
         CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
         LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
         LDFLAGS="-L${TARGET_DIR}/lib/" && \
     make -j 4
 RUN cd /home/build/builds/libzmq && \
     ./configure \
-        --host=aarch64-linux-gnueabihf \
+        --host=aarch64-linux-gnu \
         CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
         CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
         AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
@@ -451,8 +451,13 @@ RUN cd /home/build/builds/bitcoin && \
     BOOST_ROOT=/home/build/builds/boost/ \
         PKG_CONFIG_PATH="/home/build/builds/libevent:/home/build/builds/libzmq" \
         ./configure \
+        --without-bdb \
         --with-boost=yes \
         --host=aarch64-linux-gnu \
+        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
+        CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
+        AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
+        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
         EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
         ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
         LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/usr/aarch64-linux-gnu/lib/" \
