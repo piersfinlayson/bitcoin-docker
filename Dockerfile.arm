@@ -29,7 +29,7 @@ RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.de
 RUN rm -fr /home/bitcoin/*.deb
 
 RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
-"Architecture: aarch64\n"\
+"Architecture: armv7l\n"\
 "Built with software versions: \n"\
 "  bitcoin:  ${BITCOIN_VERSION}\n"\
 "  libevent: ${LIBEVENT_VERSION}\n"\
