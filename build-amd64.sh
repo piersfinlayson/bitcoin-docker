@@ -13,9 +13,6 @@ check_arch x86_64
 echo "Building bitcoin container $CONT_VERSION for amd64, pre-armv7l and pre-aarch64"
 output_versions
 
-# Forcibly get the latest build container
-docker pull piersfinlayson/build:latest
-
 # Build the amd64 version - including latest
 build_container bitcoin-amd64 Dockerfile $EXTRA_ARG
 tag_container bitcoin-amd64
