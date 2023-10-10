@@ -290,6 +290,7 @@ RUN cd /home/build/builds/bitcoin && \
     BOOST_ROOT=/home/build/builds/boost/ \
         PKG_CONFIG_PATH="/home/build/builds/libevent:/home/build/builds/libzmq" \
         ./configure \
+        --without-bdb \
         --with-boost=yes \
         --host=arm-linux-gnueabihf \
         CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
