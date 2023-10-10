@@ -24,11 +24,12 @@ check_arch() {
 
 output_versions() {
     echo "Dependency versions:"
-    echo "  bitcoin:   $BITCOIN_VERSION"
-    echo "  libevent:  $LIBEVENT_VERSION"
-    echo "  libzmq:    $LIBZMQ_VERSION"
-    echo "  boost:     $BOOST_VERSION"
-    echo "  openssl:   $BC_OPENSSL_VERSION"
+    echo "  bitcoin:       $BITCOIN_VERSION"
+    echo "  libevent:      $LIBEVENT_VERSION"
+    echo "  libzmq:        $LIBZMQ_VERSION"
+    echo "  boost:         $BOOST_VERSION"
+    echo "  openssl:       $BC_OPENSSL_VERSION"
+    echo "  ARM toolchain: $ARM_TOOLCHAIN_VERSION"
 }
 
 build_container() {
@@ -40,6 +41,7 @@ build_container() {
         --build-arg CONT_VERSION=$CONT_VERSION \
         --build-arg BITCOIN_VERSION=$BITCOIN_VERSION \
         --build-arg BC_OPENSSL_VERSION=$BC_OPENSSL_VERSION \
+	--build-arg ARM_TOOLCHAIN_VERSION=$ARM_TOOLCHAIN_VERSION \
         --target $1 \
         -t piersfinlayson/$1:$CONT_VERSION \
         -f $2 \
