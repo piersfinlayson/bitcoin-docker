@@ -28,7 +28,7 @@ RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armh
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb
 RUN rm -fr /home/bitcoin/*.deb
 
-RUN echo -e "Bitcoin Container Version: ${CONT_VERSION}\n"\
+RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
 "Architecture: aarch64\n"\
 "Built with software versions: \n"\
 "  bitcoin:  ${BITCOIN_VERSION}\n"\
@@ -38,7 +38,8 @@ RUN echo -e "Bitcoin Container Version: ${CONT_VERSION}\n"\
 "  openssl:  ${BC_OPENSSL_VERSION}"\
     > /versions.txt
 RUN echo "cat /versions.txt; /usr/local/bin/bitcoind -conf=/bitcoin-data/bitcoin.conf" \
-    > /run.sh
+    > /run.sh && \
+    chmod +x /run.sh
 
 USER bitcoin
 EXPOSE 8333/tcp
