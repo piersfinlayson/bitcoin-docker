@@ -4,7 +4,7 @@
 ARG CONT_VERSION
 
 FROM piersfinlayson/bitcoin-image-only-aarch64:$CONT_VERSION as bitcoin-image-only-aarch64
-FROM arm64v8/ubuntu:22.04 as bitcoin-aarch64-temp
+FROM arm64v8/ubuntu:22.04 as bitcoin-aarch64
 
 LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
 LABEL description="Bitcoin Node Container (aarch64)"
