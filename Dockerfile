@@ -283,7 +283,7 @@ RUN cd /home/build/builds/libzmq && \
         LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld && \
     make -j 4 
 
-# Now build bitcoin with the armv7l boost (already got source in pre-builder)
+# Now build bitcoin with the armv7l dependencies
 ENV EVENT_PREFIX='/home/build/builds/libevent'
 ENV ZMQ_PREFIX='/home/build/builds/libzmq'
 RUN cd /home/build/builds/bitcoin && \
@@ -444,7 +444,7 @@ RUN cd /home/build/builds/libzmq && \
         LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld && \
     make -j 4
 
-# Now build bitcoin with the aarch64 boost (already got source in pre-builder)
+# Now build bitcoin with the aarch64 dependencies
 ENV EVENT_PREFIX='/home/build/builds/libevent'
 ENV ZMQ_PREFIX='/home/build/builds/libzmq'
 RUN cd /home/build/builds/bitcoin && \
