@@ -444,7 +444,7 @@ RUN cd /home/build/builds/boost && \
     ./bootstrap.sh && \
     ./b2 -j 4 toolset=gcc-aarch64 --with-filesystem --with-system --with-test
 RUN cd /home/build/builds/libevent && \
-    LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib64/pkgconfig/ ./configure \
+    LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib/pkgconfig/ ./configure \
         --host=aarch64-linux-gnu \
         CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
         LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
