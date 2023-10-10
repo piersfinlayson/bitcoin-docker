@@ -210,11 +210,25 @@ RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.
 RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_amd64.deb
 RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_amd64.deb
+RUN rm -fr /home/bitcoin/*.deb
+
+RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
+"Architecture: amd64\n"\
+"Built with software versions: \n"\
+"  bitcoin:  ${BITCOIN_VERSION}\n"\
+"  libevent: ${LIBEVENT_VERSION}\n"\
+"  libzmq:   ${LIBZMQ_VERSION}\n"\
+"  boost:    ${BOOST_VERSION}\n"\
+"  openssl:  ${BC_OPENSSL_VERSION}"\
+    > /versions.txt
+RUN echo "cat /versions.txt; /usr/local/bin/bitcoind -conf=/bitcoin-data/bitcoin.conf" \
+    > /run.sh && \
+    chmod +x /run.sh
 
 USER bitcoin
 EXPOSE 8333/tcp
 VOLUME ["/bitcoin-data"]
-CMD ["/usr/local/bin/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
+CMD ["/bin/sh", "-c", "/run.sh"]
 
 #
 # arm32v7l version of the builder container - needs to install armv7l version of g++ and get boost source code, then builds bitcoin and creates dpkg
