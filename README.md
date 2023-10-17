@@ -22,14 +22,14 @@ CONT_VERSION, container version - uses convention BITCOIN_VERSION.xx, where xx i
 ./build-manifest.sh BITCOIN_VERSION CONT_VERSION
 
 ### Final result
-piersfinlayson/bitcoin-amd64:CONT_VERSION
-piersfinlayson/bitcoin-amd64:latest
-piersfinlayson/bitcoin-armv7l:CONT_VERSION
-piersfinlayson/bitcoin-armv7l:latest
-piersfinlayson/bitcoin-aarch64:CONT_VERSION
-piersfinlayson/bitcoin-aarch64:latest
-piersfinlayson/bitcoin:CONT_VERSION
-piersfinlayson/bitcoin:latest
+registry:80/bitcoin-amd64:CONT_VERSION
+registry:80/bitcoin-amd64:latest
+registry:80/bitcoin-armv7l:CONT_VERSION
+registry:80/bitcoin-armv7l:latest
+registry:80/bitcoin-aarch64:CONT_VERSION
+registry:80/bitcoin-aarch64:latest
+registry:80/bitcoin:CONT_VERSION
+registry:80/bitcoin:latest
 
 ## Running
 
@@ -37,8 +37,8 @@ Put a bitcoin.conf in your local bitcoin data directory - in the example below /
 
 Then to run:
 ```
-docker pull piersfinlayson/bitcoin:latest # Always worth running to ensure you have the latest
-docker run -d --restart always --name bitcoin -p 8333:8333 -v /usb/bitcoin-data:/bitcoin-data piersfinlayson/bitcoin:latest
+docker pull registry:80/bitcoin:latest # Always worth running to ensure you have the latest
+docker run -d --restart always --name bitcoin -p 8333:8333 -v /usb/bitcoin-data:/bitcoin-data registry:80/bitcoin:latest
 ```
 
 The ```-p 8333:8333``` is optional - only required if you want to be able to be contactable from the internet (and will require appropriate network firewall rules to be in place).

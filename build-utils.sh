@@ -34,7 +34,6 @@ output_versions() {
 
 build_container() {
     docker build \
-        --progress=plain \
         --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
         --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
         --build-arg BOOST_VERSION=$BOOST_VERSION \
@@ -43,7 +42,7 @@ build_container() {
         --build-arg BC_OPENSSL_VERSION=$BC_OPENSSL_VERSION \
 	--build-arg ARM_TOOLCHAIN_VERSION=$ARM_TOOLCHAIN_VERSION \
         --target $1 \
-        -t piersfinlayson/$1:$CONT_VERSION \
+        -t registry:80/$1:$CONT_VERSION \
         -f $2 \
         $EXTRA_ARG \
         .
@@ -51,6 +50,6 @@ build_container() {
 
 tag_container() {
     docker tag \
-        piersfinlayson/$1:$CONT_VERSION \
-        piersfinlayson/$1:latest
+        registry:80/$1:$CONT_VERSION \
+        registry:80/$1:latest
 }

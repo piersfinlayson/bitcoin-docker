@@ -17,22 +17,20 @@ else
 	echo Building container version $CONT_VERSION
 fi
 
-docker login -u piersfinlayson
-
 # Create VERSION manifest
-docker manifest create -a piersfinlayson/bitcoin:${CONT_VERSION} piersfinlayson/bitcoin-amd64:${CONT_VERSION} piersfinlayson/bitcoin-armv7l:${CONT_VERSION} piersfinlayson/bitcoin-aarch64:${CONT_VERSION}
-docker manifest annotate --arch amd64 --os linux piersfinlayson/bitcoin:${CONT_VERSION} piersfinlayson/bitcoin-amd64:${CONT_VERSION}
-docker manifest annotate --arch arm --os linux --variant armv7l piersfinlayson/bitcoin:${CONT_VERSION} piersfinlayson/bitcoin-armv7l:${CONT_VERSION}
-docker manifest annotate --arch arm --os linux --variant arm64 piersfinlayson/bitcoin:${CONT_VERSION} piersfinlayson/bitcoin-aarch64:${CONT_VERSION}
-docker manifest inspect piersfinlayson/bitcoin:${CONT_VERSION}
-docker manifest push --purge piersfinlayson/bitcoin:${CONT_VERSION}
+docker manifest create -a registry:80/bitcoin:${CONT_VERSION} registry:80/bitcoin-amd64:${CONT_VERSION} registry:80/bitcoin-armv7l:${CONT_VERSION} registry:80/bitcoin-aarch64:${CONT_VERSION}
+docker manifest annotate --arch amd64 --os linux registry:80/bitcoin:${CONT_VERSION} registry:80/bitcoin-amd64:${CONT_VERSION}
+docker manifest annotate --arch arm --os linux --variant armv7l registry:80/bitcoin:${CONT_VERSION} registry:80/bitcoin-armv7l:${CONT_VERSION}
+docker manifest annotate --arch arm --os linux --variant arm64 registry:80/bitcoin:${CONT_VERSION} registry:80/bitcoin-aarch64:${CONT_VERSION}
+docker manifest inspect registry:80/bitcoin:${CONT_VERSION}
+docker manifest push --purge registry:80/bitcoin:${CONT_VERSION}
 
 # Create latest manifest
-docker manifest create -a piersfinlayson/bitcoin:latest piersfinlayson/bitcoin-amd64:${CONT_VERSION} piersfinlayson/bitcoin-armv7l:${CONT_VERSION} piersfinlayson/bitcoin-aarch64:${CONT_VERSION}
-docker manifest annotate --arch amd64 --os linux piersfinlayson/bitcoin:latest piersfinlayson/bitcoin-amd64:${CONT_VERSION}
-docker manifest annotate --arch arm --os linux --variant armv7l piersfinlayson/bitcoin:latest piersfinlayson/bitcoin-armv7l:${CONT_VERSION}
-docker manifest annotate --arch arm --os linux --variant arm64 piersfinlayson/bitcoin:latest piersfinlayson/bitcoin-aarch64:${CONT_VERSION}
-docker manifest inspect piersfinlayson/bitcoin:latest
-docker manifest push --purge piersfinlayson/bitcoin:latest
+docker manifest create -a registry:80/bitcoin:latest registry:80/bitcoin-amd64:${CONT_VERSION} registry:80/bitcoin-armv7l:${CONT_VERSION} registry:80/bitcoin-aarch64:${CONT_VERSION}
+docker manifest annotate --arch amd64 --os linux registry:80/bitcoin:latest registry:80/bitcoin-amd64:${CONT_VERSION}
+docker manifest annotate --arch arm --os linux --variant armv7l registry:80/bitcoin:latest registry:80/bitcoin-armv7l:${CONT_VERSION}
+docker manifest annotate --arch arm --os linux --variant arm64 registry:80/bitcoin:latest registry:80/bitcoin-aarch64:${CONT_VERSION}
+docker manifest inspect registry:80/bitcoin:latest
+docker manifest push --purge registry:80/bitcoin:latest
 
-docker pull piersfinlayson/bitcoin:latest
+docker pull registry:80/bitcoin:latest
