@@ -9,8 +9,15 @@ BITCOIN_VERSION, must be a valid branch of https://github.com/bitcoin/bitcoin - 
 
 CONT_VERSION, container version - uses convention BITCOIN_VERSION.xx, where xx is container build number for that version of bitcoin (so e.g. 22.x.01)
 
+### Step 0 - on x86
+
+Check DEPENDENCIES for any updates, and update as approach.  Remember to check in before steps beyond step 1.
+
 ### Step 1 - on x86
 ./build-amd64.sh BITCOIN_VERSION CONT_VERSION
+
+### Step 1b - on x86
+Commit DEPENDENCIES if changed.
 
 ### Step 2a - on armv7 (32-bit raspberry pi, not a zero)
 ./build-armv7l.sh BITCOIN_VERSION CONT_VERSION
