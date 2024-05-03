@@ -3,7 +3,7 @@
 #
 ARG CONT_VERSION
 
-FROM registry:80/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
+FROM --platform=linux/amd64 registry:80/bitcoin-image-only-armv7l:$CONT_VERSION as bitcoin-image-only-armv7l
 FROM arm32v7/ubuntu:23.10 as bitcoin-armv7l
 
 LABEL maintainer="Piers Finlayson <piers@piers.rocks>"

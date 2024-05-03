@@ -14,7 +14,7 @@ echo "Building bitcoin container $CONT_VERSION for armv7l"
 output_versions
 
 # Get the container already built on amd64 containing arm images
-docker pull registry:80/bitcoin-image-only-armv7l:$CONT_VERSION
+docker pull registry:80/bitcoin-image-only-armv7l:$CONT_VERSION --platform=linux/amd64
 build_container bitcoin-armv7l Dockerfile.arm $EXTRA_ARG
 tag_container bitcoin-armv7l
 echo "Successfully built and tagged registry:80/bitcoin-armv7l:$CONT_VERSION"
