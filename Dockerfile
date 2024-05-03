@@ -379,7 +379,7 @@ RUN cd /home/build/builds/libzmq && \
 #
 # Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
 #
-FROM scratch as bitcoin-image-only-armv7l
+FROM --platform=linux/arm/v7 scratch as bitcoin-image-only-armv7l
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
 ARG LIBEVENT_VERSION
@@ -541,7 +541,7 @@ RUN cd /home/build/builds/libzmq && \
 #
 # Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
 #
-FROM scratch as bitcoin-image-only-aarch64
+FROM --platform=linux/arm64/v8 scratch as bitcoin-image-only-aarch64
 ARG BITCOIN_VERSION
 ARG CONT_VERSION
 ARG LIBEVENT_VERSION

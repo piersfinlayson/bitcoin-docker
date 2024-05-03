@@ -35,6 +35,7 @@ output_versions() {
 build_container() {
     echo "Extra arg $EXTRA_ARG"
     docker build \
+	--provenance=false \
         --build-arg LIBEVENT_VERSION=$LIBEVENT_VERSION \
         --build-arg LIBZMQ_VERSION=$LIBZMQ_VERSION \
         --build-arg BOOST_VERSION=$BOOST_VERSION \
