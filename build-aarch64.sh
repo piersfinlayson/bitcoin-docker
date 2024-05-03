@@ -14,7 +14,7 @@ echo "Building bitcoin container $CONT_VERSION for aarch64"
 output_versions
 
 # Get the container already built on amd64 containing arm images
-docker pull registry:80/bitcoin-image-only-aarch64:$CONT_VERSION
+docker pull registry:80/bitcoin-image-only-aarch64:$CONT_VERSION --platform linux/amd64
 build_container bitcoin-aarch64 Dockerfile.aarch64 $EXTRA_ARG
 tag_container bitcoin-aarch64
 echo "Successfully built and tagged registry:80/bitcoin-aarch64:$CONT_VERSION"

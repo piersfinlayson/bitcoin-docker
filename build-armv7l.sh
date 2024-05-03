@@ -6,7 +6,7 @@ BITCOIN_VERSION=$1
 CONT_VERSION=$2
 EXTRA_ARG=$3
 check_args
-check_arch armv7l
+#check_arch armv7l
 
 . ./DEPENDENCIES.sh
 
