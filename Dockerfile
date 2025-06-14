@@ -1,68 +1,40 @@
-#
-# Container performing common (architecture agnostic) operators, such as
-# getting the code at the right versions
-#
-FROM ubuntu:22.04 as pre-builder
+# syntax=docker/dockerfile:1
 
-LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
-LABEL description="Bitcoin Node Pre-Build Container"
+ARG XX_VERSION=1.6.1
+ARG RUST_VERSION=1.89
+ARG ALPINE_VERSION=3.22
 
-USER root
-RUN apt update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        autoconf \
-        automake \
-        bsdmainutils \
-        build-essential \
-        checkinstall \
-        git \
-        libtool \
-        m4 \
-        pkg-config \
-        sudo \
-        wget && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/*
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS prebuild
+
+# Do platform agnostic stuff
 
 ARG CONT_VERSION
 ARG BITCOIN_VERSION
 ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
 ARG BOOST_VERSION
 ARG BC_OPENSSL_VERSION
 
-RUN echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd
-RUN useradd -ms /bin/bash build && \
-    usermod -a -G sudo build && \
-    mkdir /home/build/builds && \
-    chown -R build:build /home/build/builds
+RUN apk add --no-cache autoconf automake bash clang git libtool lld m4 make perl pkgconfig wget
+COPY --from=xx / /
+
+RUN mkdir /build
 
 # Get boost source
-USER build
-RUN cd /home/build/builds && \
+RUN cd /build && \
     git clone https://github.com/boostorg/boost --recursive
-RUN cd /home/build/builds/boost && \
+RUN cd /build/boost && \
     git checkout -f tags/boost-${BOOST_VERSION} && \
     git submodule update --init --recursive
 
 # Get libevent source
-RUN cd /home/build/builds && \
+RUN cd /build && \
     git clone https://github.com/libevent/libevent
-RUN cd /home/build/builds/libevent && \
+RUN cd /build/libevent && \
     git checkout -f tags/release-${LIBEVENT_VERSION}-stable
-RUN cd /home/build/builds/libevent && \
-    ./autogen.sh
-
-# Get libzmq source
-RUN cd /home/build/builds && \
-    git clone https://github.com/zeromq/libzmq
-RUN cd /home/build/builds/libzmq && \
-    git checkout -f tags/v${LIBZMQ_VERSION}
-RUN cd /home/build/builds/libzmq && \
-    ./autogen.sh
 
 # Get OpenSSL source
-ENV TMP_OPENSSL_DIR=/home/build/builds/openssl
+ENV TMP_OPENSSL_DIR=/build/openssl
 RUN mkdir -p $TMP_OPENSSL_DIR && \
     cd $TMP_OPENSSL_DIR && \
     wget https://www.openssl.org/source/openssl-${BC_OPENSSL_VERSION}.tar.gz && \
@@ -71,485 +43,150 @@ RUN mkdir -p $TMP_OPENSSL_DIR && \
     mv openssl-${BC_OPENSSL_VERSION} openssl-src
 
 # Get bitcoin source
-USER build
-RUN cd /home/build/builds && \
+RUN cd /build && \
     git clone https://github.com/bitcoin/bitcoin
-
-# Checkout right version of bitcoin
-RUN cd /home/build/builds/bitcoin && \
+RUN cd /build/bitcoin && \
     git checkout -f $BITCOIN_VERSION
-RUN cd /home/build/builds/bitcoin && \
-    ./autogen.sh
 
-# Done
-USER root
+# Start platform specific phase
+FROM --platform=$BUILDPLATFORM prebuild AS build
 
-#
-# x86 version of the builder - builds the source and packages it up
-#
-FROM pre-builder as builder-amd64
+ARG TARGETPLATFORM
+ARG TARGETARCH
+RUN xx-apk add --no-cache g++ gcc linux-headers musl-dev
 
-LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
-LABEL description="Bitcoin Node Build Container (amd64)"
+RUN cd /build/openssl/openssl-src && \
+    export CONFIGURE_FLAGS="no-shared no-zlib -fPIC no-ssl3" && \
+    echo "Compiling openssl for architecture: $TARGETARCH" && \
+    if [ $TARGETARCH = "amd64" ] || [ $TARGETARCH = "x86_64" ] ; \
+    then \
+        export CONFIGURE_FLAGS="$CONFIGURE_FLAGS linux-x86_64" ; \
+    elif [ $TARGETARCH = "aarch64" ] || [ $TARGETARCH = "arm64" ] ; \
+    then \
+        export CONFIGURE_FLAGS="$CONFIGURE_FLAGS linux-aarch64 -march=armv8-a+crc+simd+fp" ; \
+    elif [ $TARGETARCH = "arm" ] ; \
+    then \
+        VARIANT=$(xx-info variant) ; \
+        echo "ARM variant: $VARIANT" ; \
+        if [ $VARIANT == "v7" ] ; \
+        then \
+            export CONFIGURE_FLAGS="$CONFIGURE_FLAGS linux-armv4 -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard" ; \
+        elif [ $VARIANT == "v6" ] ; \
+        then \
+            export CONFIGURE_FLAGS="$CONFIGURE_FLAGS linux-armv4 -march=armv6 -marm -mfpu=vfp" ; \
+        else \
+            echo "Unsupported variant" ; \
+        fi \
+    else \
+        echo "Unsupported architecture" ; \
+        exit 1 ; \
+    fi && \
+    ./config $CONFIGURE_FLAGS \
+    --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
+    CC=xx-clang CXX=xx-clang++ && \
+    make -j8 depend && \
+    make -j8 && \
+    make install_sw
 
-ARG CONT_VERSION
-ARG BITCOIN_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
+# Build and install boost
+RUN cd /build/boost && \
+    ./bootstrap.sh --with-toolset=clang --with-libraries=filesystem,system,test
+RUN cd /build/boost && \
+    CXX_VERSION=$(ls -d /usr/include/c++/* | awk -F'/' '{print $NF}') && \
+    TARGET_TRIPLE=$(xx-info triple) && \
+    echo "Using C++ $CXX_VERSION for target $TARGET_TRIPLE" && \
+    ./b2 toolset=clang --host=$(xx-info alpine-arch) --target=$(xx-info triple) \
+    link=static runtime-link=static -j8 \
+    --with-filesystem --with-system --with-test --prefix=/$(xx-info triple)/usr/local/boost \
+    cxxflags="-std=c++11 -stdlib=libc++ -I/usr/include/c++/$CXX_VERSION -I/usr/include/c++/$CXX_VERSION/x86_64-alpine-linux-musl -I/$TARGET_TRIPLE/usr/include" \
+    linkflags="-stdlib=libc++"
+RUN cd /build/boost && \
+    ./b2 install toolset=clang --host=$(xx-info alpine-arch) --target=$(xx-info triple) \
+    link=static runtime-link=static -j8 \
+    --with-filesystem --with-system --with-test --prefix=/$(xx-info triple)/usr/local/boost \
+    cxxflags="-std=c++11 -stdlib=libc++ -I/usr/include/c++/$CXX_VERSION -I/usr/include/c++/$CXX_VERSION/x86_64-alpine-linux-musl -I/$TARGET_TRIPLE/usr/include" \
+    linkflags="-stdlib=libc++"
 
-USER build
+RUN apk add --no-cache cmake
 
-# Build OpenSSL
-ENV PLATFORM=x86_64-linux-gnu
-ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-x86_64"
-ENV TARGET_DIR=$TMP_OPENSSL_DIR/openssl-$PLATFORM
-RUN cd ~/ && \
-    cp -pr $TMP_OPENSSL_DIR/openssl-src working && \
-    cd working && \
-    env CC=$PLATFORM-gcc RANLIB=$PLATFORM-ranlib AR=$PLATFORM-ar LD=$PLATFORM-ld ./Configure --openssldir=$TARGET_DIR --prefix=$TARGET_DIR $TARGET_CONFIGURE_FLAGS && \
-    make -j 4 depend && \
-    make -j 4 && \
-    make install && \
-    cd ~/ && \
-    rm -fr working
-
-# Build boost, libevent and libzmq, install boost and create .debs for both
-RUN cd /home/build/builds/boost && \
-    ./bootstrap.sh && \
-    ./b2 -j 4 --with-filesystem --with-system --with-test
-RUN cd /home/build/builds/boost && \
-    sudo checkinstall \
-        --pkgname=libboost \
-        --pkgversion=$BOOST_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Boost Software License" \
-        --arch=amd64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=yes \
-        ./b2 install -j 4 --with-filesystem --with-system --with-test --prefix=/usr
-RUN cd /home/build/builds/libevent && \
-    LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib64/pkgconfig/ ./configure \
-        --host=x86_64 \
-        LDFLAGS="-L${TARGET_DIR}/lib/" && \
-    make -j 4
-RUN cd /home/build/builds/libevent && \
-    sudo checkinstall \
-        --pkgname=libevent \
-        --pkgversion=$LIBEVENT_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="3-clause BSD" \
-        --arch=amd64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-RUN cd /home/build/builds/libzmq && \
-    ./configure && \
-    make -j 4
-RUN cd /home/build/builds/libzmq && \
-    sudo checkinstall \
-        --pkgname=libzmq \
-        --pkgversion=$LIBZMQ_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="GPLv3" \
-        --arch=amd64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=yes
+# Build and install libevent using CMAKE (like Bitcoin's depends system)
+RUN cd /build/libevent && \
+    TARGET_TRIPLE=$(xx-info triple) && \
+    cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/$TARGET_TRIPLE/usr/local/libevent \
+    -DCMAKE_C_COMPILER=xx-clang \
+    -DCMAKE_CXX_COMPILER=xx-clang++ \
+    -DEVENT__DISABLE_BENCHMARK=ON \
+    -DEVENT__DISABLE_OPENSSL=ON \
+    -DEVENT__DISABLE_SAMPLES=ON \
+    -DEVENT__DISABLE_REGRESS=ON \
+    -DEVENT__DISABLE_TESTS=ON \
+    -DEVENT__LIBRARY_TYPE=STATIC && \
+    cmake --build build -j8 && \
+    cmake --install build
 
 # Build bitcoin
-# Have tried adding --with-boost-unit-test-framework=boost_unit_test_framework and BOOST_UNIT_TEST_FRAMEWORK_LIB="-lboost_unit_test_framework", but building with tests still doesn't work, so install boost unit_test_framework above
-ENV EVENT_PREFIX='/home/build/builds/libevent'
-RUN cd /home/build/builds/bitcoin && \
-        ./configure \
-        --host=x86_64 \
-        EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include"
-RUN cd /home/build/builds/bitcoin && \
-    make -j 4
-#ENV LD_LIBRARY_PATH=/usr/local/lib
-#RUN cd /home/build/builds/bitcoin && \
-#    make check
-RUN cd /home/build/builds/bitcoin && \
-    sudo checkinstall \
-        --pkgname=bitcoin \
-        --pkgversion=$BITCOIN_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense=MIT \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
+#
+# There was lots of fiddling required to figure out how to get this to cross
+# compile properly.  If something looks odd below, it was probably because 
+# of this.
+#
+#RUN xx-apk add --no-cache pkgconfig
+RUN cd /build/bitcoin && \
+    xx-clang --setup-target-triple && \
+    TARGET_TRIPLE=$(xx-info triple) && \
+    if [ $TARGETARCH = "aarch64" ] || [ $TARGETARCH = "arm64" ] ; \
+    then \
+        export CXXFLAGS_EXTRA="-mno-outline-atomics" ; \
+    elif [ $TARGETARCH = "arm" ] ; \
+    then \
+        export CXXFLAGS_EXTRA="-mno-outline-atomics" ; \
+    else \
+        export CXXFLAGS_EXTRA="" ; \
+    fi && \
+    cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/$TARGET_TRIPLE/usr/local/bitcoin \
+    -DCMAKE_PREFIX_PATH="/$TARGET_TRIPLE/usr/local/boost;/$TARGET_TRIPLE/usr/local/libevent" \
+    -DCMAKE_C_COMPILER="$TARGET_TRIPLE-clang" \
+    -DCMAKE_CXX_COMPILER="$TARGET_TRIPLE-clang++" \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DENABLE_WALLET=OFF \
+    -DWITH_ZMQ=OFF \
+    -DWITH_BDB=OFF \
+    -DWITH_SQLITE=OFF \
+    -DAPPEND_CXXFLAGS="$CXXFLAGS_EXTRA"
+RUN cd /build/bitcoin && \
+    cmake --build build -j8
 
-#
-# amd64 version of bitcoin container - installed dpkg from previous stage
-#
-FROM ubuntu:22.04 as bitcoin-amd64
+# Can't run tests as likely cross-compiling
+
+# Pull together required files
+RUN cd /build/bitcoin && \
+    cmake --install build
+RUN mkdir /output/
+RUN TARGET_TRIPLE=$(xx-info triple) && \
+    cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoind /output/ && \
+    cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-cli /output/ && \
+    cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-tx /output/ && \
+    cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-util /output/
+RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
+    "Platform: $BUILDPLATFORM\n"\
+    "Built with software versions: \n"\
+    "  bitcoin:  ${BITCOIN_VERSION}\n"\
+    "  libevent: ${LIBEVENT_VERSION}\n"\
+    "  boost:    ${BOOST_VERSION}\n"\
+    "  openssl:  ${BC_OPENSSL_VERSION}"\
+    > /output/versions.txt
+
+FROM scratch
 
 LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
-LABEL description="Bitcoin Node Container (amd64)"
+LABEL description="Bitcoin Node Container"
 
-ARG CONT_VERSION
-ARG BITCOIN_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
+COPY --from=build /output/ /
 
-RUN useradd -ms /bin/false bitcoin 
-RUN apt update && \
-        DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                bsdmainutils && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/*
-COPY --from=builder-amd64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
-COPY --from=builder-amd64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
-COPY --from=builder-amd64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
-COPY --from=builder-amd64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_amd64.deb /home/bitcoin/
-RUN dpkg --install /home/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_amd64.deb
-RUN dpkg --install /home/bitcoin/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_amd64.deb
-RUN dpkg --install /home/bitcoin/libboost_$BOOST_VERSION-${CONT_VERSION}_amd64.deb
-RUN dpkg --install /home/bitcoin/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_amd64.deb
-RUN rm -fr /home/bitcoin/*.deb
-
-RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
-"Architecture: amd64\n"\
-"Built with software versions: \n"\
-"  bitcoin:  ${BITCOIN_VERSION}\n"\
-"  libevent: ${LIBEVENT_VERSION}\n"\
-"  libzmq:   ${LIBZMQ_VERSION}\n"\
-"  boost:    ${BOOST_VERSION}\n"\
-"  openssl:  ${BC_OPENSSL_VERSION}"\
-    > /versions.txt
-RUN echo "cat /versions.txt; /usr/local/bin/bitcoind -conf=/bitcoin-data/bitcoin.conf" \
-    > /run.sh && \
-    chmod +x /run.sh
-
-USER bitcoin
 EXPOSE 8333/tcp
 VOLUME ["/bitcoin-data"]
-CMD ["/bin/sh", "-c", "/run.sh"]
-
-#
-# arm32v7l version of the builder container - needs to install armv7l version of g++ and get boost source code, then builds bitcoin and creates dpkg
-#
-FROM pre-builder as builder-armv7l
-
-LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
-LABEL description="Bitcoin Node Build Container (armv7l)"
-
-ARG CONT_VERSION
-ARG BITCOIN_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
-ARG ARM_TOOLCHAIN_VERSION
-
-USER build
-
-# Get ARM toolchain
-ENV ARM_TOOLCHAIN_TARGET="arm-none-linux-gnueabihf"
-ENV ARM_TOOLCHAIN="arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-${ARM_TOOLCHAIN_TARGET}"
-ENV ARM_TOOLCHAIN_URL_PREFIX="https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_TOOLCHAIN_VERSION}/binrel"
-ENV ARM_TOOLCHAIN_TAR="${ARM_TOOLCHAIN}.tar"
-ENV ARM_TOOLCHAIN_URL_TAR_XZ="${ARM_TOOLCHAIN_URL_PREFIX}/${ARM_TOOLCHAIN_TAR}.xz"
-ENV ARM_TOOLCHAIN_TAR_XZ="${ARM_TOOLCHAIN_TAR}.xz"
-RUN cd /home/build/builds && \
-    wget ${ARM_TOOLCHAIN_URL_TAR_XZ} -O ./${ARM_TOOLCHAIN_TAR_XZ} && \
-    unxz ./${ARM_TOOLCHAIN_TAR_XZ} && \
-    tar xf ./${ARM_TOOLCHAIN_TAR} && \
-    rm ./${ARM_TOOLCHAIN_TAR}
-ENV ARM_TOOLCHAIN_DIR=/home/build/builds/${ARM_TOOLCHAIN}
-ENV ARM_TOOLCHAIN_BIN_PREFIX=${ARM_TOOLCHAIN_DIR}/bin/${ARM_TOOLCHAIN_TARGET}
-
-# Build OpenSSL
-ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-armv4 -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard"
-ENV TARGET_DIR=$TMP_OPENSSL_DIR/openssl-${ARM_TOOLCHAIN_TARGET}
-RUN cd ~/ && \
-    cp -pr $TMP_OPENSSL_DIR/openssl-src working && \
-    cd working && \
-    env CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc RANLIB=${ARM_TOOLCHAIN_BIN_PREFIX}-ranlib AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld ./Configure --openssldir=$TARGET_DIR --prefix=$TARGET_DIR $TARGET_CONFIGURE_FLAGS && \
-    make -j 4 depend && \
-    make -j 4 && \
-    make install && \
-    cd ~/ && \
-    rm -fr working
-
-# Build boost, libevent and libzmq
-RUN cd /home/build/builds/boost && \
-    echo "using gcc : arm : ${ARM_TOOLCHAIN_BIN_PREFIX}-g++ ;" > /home/build/user-config.jam && \
-    ./bootstrap.sh && \
-    ./b2 -j 4 toolset=gcc-arm --with-filesystem --with-system --with-test
-RUN cd /home/build/builds/libevent && \
-    LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib/pkgconfig/ ./configure \
-        --host=arm-linux-gnueabihf \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
-        LDFLAGS="-L${TARGET_DIR}/lib/" && \
-    make -j 4
-RUN cd /home/build/builds/libzmq && \
-    ./configure \
-        --host=arm-linux-gnueabihf \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
-        AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld && \
-    make -j 4 
-
-# Now build bitcoin with the armv7l dependencies
-ENV EVENT_PREFIX='/home/build/builds/libevent'
-ENV ZMQ_PREFIX='/home/build/builds/libzmq'
-RUN cd /home/build/builds/bitcoin && \
-    BOOST_ROOT=/home/build/builds/boost/ \
-        PKG_CONFIG_PATH="/home/build/builds/libevent:/home/build/builds/libzmq" \
-        ./configure \
-        --without-bdb \
-        --with-boost=yes \
-        --host=arm-linux-gnueabihf \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
-        AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
-        EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
-        ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
-        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L${ARM_TOOLCHAIN_DIR}/lib/" \
-        CPPFLAGS="-I/home/build/builds/boost -I${EVENT_PREFIX}/include" \
-        --with-boost-filesystem=boost_filesystem \
-        --with-boost-system=boost_system \
-        --disable-tests \
-        --enable-zmq \
-        --with-seccomp=no
-
-RUN cd /home/build/builds/bitcoin && \
-    make -j 4
-
-# Note that we don't build tests above, and we're cross-compiling, so make check doesn't do anything useful
-#RUN cd /home/build/builds/bitcoin && \
-#    LD_LIBRARY_PATH=/home/build/builds/boost/stage/lib \
-#    make check
-
-RUN cd /home/build/builds/bitcoin && \
-    sudo checkinstall \
-        --pkgname=bitcoin \
-        --pkgversion=$BITCOIN_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense=MIT \
-        --arch=armhf \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-
-# For sudo b2 install to work need to put user-config.jam with arm gcc in /root
-USER root
-RUN cp /home/build/user-config.jam /root
-USER build
-RUN cd /home/build/builds/boost && \
-    sudo checkinstall \
-        --pkgname=libboost \
-        --pkgversion=$BOOST_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Boost Software License" \
-        --arch=armhf \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no \
-        ./b2 install -j 4 toolset=gcc-arm --with-filesystem --with-system --with-test --prefix=/usr
-RUN cd /home/build/builds/libevent && \
-    sudo checkinstall \
-        --pkgname=libevent \
-        --pkgversion=$LIBEVENT_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="3-clause BSD" \
-        --arch=armhf \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-RUN cd /home/build/builds/libzmq && \
-    sudo checkinstall \
-        --pkgname=libzmq \
-        --pkgversion=$LIBZMQ_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="GPLv3" \
-        --arch=armhf \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-
-#
-# Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
-#
-FROM --platform=linux/arm/v7 scratch as bitcoin-image-only-armv7l
-ARG BITCOIN_VERSION
-ARG CONT_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
-
-COPY --from=builder-armv7l /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_armhf.deb /
-COPY --from=builder-armv7l /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_armhf.deb /
-
-#
-# aarch64 version of the builder container - needs to install aarch64 version of g++ and get boost source code, then builds bitcoin and creates dpkg
-#
-FROM pre-builder as builder-aarch64
-
-LABEL maintainer="Piers Finlayson <piers@piers.rocks>"
-LABEL description="Bitcoin Node Build Container (aarch64)"
-
-ARG CONT_VERSION
-ARG BITCOIN_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
-ARG ARM_TOOLCHAIN_VERSION
-
-USER build
-
-# Get ARM toolchain
-ENV ARM_TOOLCHAIN_TARGET="aarch64-none-linux-gnu"
-ENV ARM_TOOLCHAIN="arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-${ARM_TOOLCHAIN_TARGET}"
-ENV ARM_TOOLCHAIN_URL_PREFIX="https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_TOOLCHAIN_VERSION}/binrel"
-ENV ARM_TOOLCHAIN_TAR="${ARM_TOOLCHAIN}.tar"
-ENV ARM_TOOLCHAIN_URL_TAR_XZ="${ARM_TOOLCHAIN_URL_PREFIX}/${ARM_TOOLCHAIN_TAR}.xz"
-ENV ARM_TOOLCHAIN_TAR_XZ="${ARM_TOOLCHAIN_TAR}.xz"
-RUN cd /home/build/builds && \
-    wget ${ARM_TOOLCHAIN_URL_TAR_XZ} -O ./${ARM_TOOLCHAIN_TAR_XZ} && \
-    unxz ./${ARM_TOOLCHAIN_TAR_XZ} && \
-    tar xf ./${ARM_TOOLCHAIN_TAR} && \
-    rm ./${ARM_TOOLCHAIN_TAR}
-ENV ARM_TOOLCHAIN_DIR=/home/build/builds/${ARM_TOOLCHAIN}
-ENV ARM_TOOLCHAIN_BIN_PREFIX=${ARM_TOOLCHAIN_DIR}/bin/${ARM_TOOLCHAIN_TARGET}
-
-# Build OpenSSL
-ENV TARGET_CONFIGURE_FLAGS="no-shared no-zlib -fPIC linux-aarch64 -march=armv8-a+crc+simd+fp"
-ENV TARGET_DIR=$TMP_OPENSSL_DIR/openssl-${ARM_TOOLCHAIN_TARGET}
-RUN cd ~/ && \
-    cp -pr $TMP_OPENSSL_DIR/openssl-src working && \
-    cd working && \
-    env CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc RANLIB=${ARM_TOOLCHAIN_BIN_PREFIX}-ranlib AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld ./Configure --openssldir=$TARGET_DIR --prefix=$TARGET_DIR $TARGET_CONFIGURE_FLAGS && \
-    make -j 4 depend && \
-    make -j 4 && \
-    make install && \
-    cd ~/ && \
-    rm -fr working
-
-# Build boost, libevent and libzmq
-RUN cd /home/build/builds/boost && \
-    echo "using gcc : aarch64 : ${ARM_TOOLCHAIN_BIN_PREFIX}-g++ ;" > /home/build/user-config.jam && \
-    ./bootstrap.sh && \
-    ./b2 -j 4 toolset=gcc-aarch64 --with-filesystem --with-system --with-test
-RUN cd /home/build/builds/libevent && \
-    LIBS="-ldl" PKG_CONFIG_PATH=${TARGET_DIR}/lib/pkgconfig/ ./configure \
-        --host=aarch64-linux-gnu \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
-        LDFLAGS="-L${TARGET_DIR}/lib/" && \
-    make -j 4
-RUN cd /home/build/builds/libzmq && \
-    ./configure \
-        --host=aarch64-linux-gnu \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
-        AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld && \
-    make -j 4
-
-# Now build bitcoin with the aarch64 dependencies
-ENV EVENT_PREFIX='/home/build/builds/libevent'
-ENV ZMQ_PREFIX='/home/build/builds/libzmq'
-RUN cd /home/build/builds/bitcoin && \
-    BOOST_ROOT=/home/build/builds/boost/ \
-        PKG_CONFIG_PATH="/home/build/builds/libevent:/home/build/builds/libzmq" \
-        ./configure \
-        --without-bdb \
-        --with-boost=yes \
-        --host=aarch64-linux-gnu \
-        CC=${ARM_TOOLCHAIN_BIN_PREFIX}-gcc \
-        CXX=${ARM_TOOLCHAIN_BIN_PREFIX}-g++ \
-        AR=${ARM_TOOLCHAIN_BIN_PREFIX}-ar \
-        LD=${ARM_TOOLCHAIN_BIN_PREFIX}-ld \
-        EVENT_LIBS="-L${EVENT_PREFIX}/.libs -levent" EVENT_CFLAGS="-I${EVENT_PREFIX}/include" \
-        ZMQ_LIBS="-L${ZMQ_PREFIX}/src/.libs -lzmq" ZMQ_CFLAGS="-I${ZMQ_PREFIX}/include" \
-        LDFLAGS="-L/home/build/builds/boost/stage/lib/ -L/usr/aarch64-linux-gnu/lib/" \
-        CPPFLAGS="-I/home/build/builds/boost -I${EVENT_PREFIX}/include" \
-        --with-boost-filesystem=boost_filesystem \
-        --with-boost-system=boost_system \
-        --disable-tests \
-        --enable-zmq \
-        --with-seccomp=no
-
-RUN cd /home/build/builds/bitcoin && \
-    make -j 4
-
-# Note that we don't build tests above, and we're cross-compiling, so make check doesn't do anything useful
-#RUN cd /home/build/builds/bitcoin && \
-#    LD_LIBRARY_PATH=/home/build/builds/boost/stage/lib \
-#    make check
-
-RUN cd /home/build/builds/bitcoin && \
-    sudo checkinstall \
-        --pkgname=bitcoin \
-        --pkgversion=$BITCOIN_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense=MIT \
-        --arch=arm64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-
-# For sudo b2 install to work need to put user-config.jam with aarch64 gcc in /root
-USER root
-RUN cp /home/build/user-config.jam /root
-USER build
-RUN cd /home/build/builds/boost && \
-    sudo checkinstall \
-        --pkgname=libboost \
-        --pkgversion=$BOOST_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="Boost Software License" \
-        --arch=arm64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no \
-        ./b2 -j 4 install toolset=gcc-aarch64 --with-filesystem --with-system --with-test --prefix=/usr
-RUN cd /home/build/builds/libevent && \
-    sudo checkinstall \
-        --pkgname=libevent \
-        --pkgversion=$LIBEVENT_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="3-clause BSD" \
-        --arch=arm64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-RUN cd /home/build/builds/libzmq && \
-    sudo checkinstall \
-        --pkgname=libzmq \
-        --pkgversion=$LIBZMQ_VERSION \
-        --pkgrelease=$CONT_VERSION \
-        --pkglicense="GPLv3" \
-        --arch=arm64 \
-        --maintainer=piers@piers.rocks \
-        -y \
-        --install=no
-
-#
-# Create a container with just the ARM .debs in, which will then be used on ARM machine to build the real container
-#
-FROM --platform=linux/arm64/v8 scratch as bitcoin-image-only-aarch64
-ARG BITCOIN_VERSION
-ARG CONT_VERSION
-ARG LIBEVENT_VERSION
-ARG LIBZMQ_VERSION
-ARG BOOST_VERSION
-ARG BC_OPENSSL_VERSION
-
-COPY --from=builder-aarch64 /home/build/builds/bitcoin/bitcoin_$BITCOIN_VERSION-${CONT_VERSION}_arm64.deb /
-COPY --from=builder-aarch64 /home/build/builds/boost/libboost_$BOOST_VERSION-${CONT_VERSION}_arm64.deb /
-COPY --from=builder-aarch64 /home/build/builds/libevent/libevent_$LIBEVENT_VERSION-${CONT_VERSION}_arm64.deb /
-COPY --from=builder-aarch64 /home/build/builds/libzmq/libzmq_$LIBZMQ_VERSION-${CONT_VERSION}_arm64.deb /
+CMD ["/bitcoind -conf=/bitcoin-data/bitcoin.conf"]
