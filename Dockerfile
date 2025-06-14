@@ -156,9 +156,12 @@ RUN cd /build/bitcoin && \
     -DWITH_ZMQ=OFF \
     -DWITH_BDB=OFF \
     -DWITH_SQLITE=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-static" \
     -DAPPEND_CXXFLAGS="$CXXFLAGS_EXTRA"
 RUN cd /build/bitcoin && \
     cmake --build build -j8
+
+#   -DBUILD_TESTS=OFF \
 
 # Can't run tests as likely cross-compiling
 
@@ -171,8 +174,8 @@ RUN TARGET_TRIPLE=$(xx-info triple) && \
     cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-cli /output/ && \
     cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-tx /output/ && \
     cp /$TARGET_TRIPLE/usr/local/bitcoin/bin/bitcoin-util /output/
-RUN echo "Bitcoin Container Version: ${CONT_VERSION}\n"\
-    "Platform: $BUILDPLATFORM\n"\
+RUN echo -e "Bitcoin Container Version: ${CONT_VERSION}\n"\
+    "Platform: ${TARGETPLATFORM}\n"\
     "Built with software versions: \n"\
     "  bitcoin:  ${BITCOIN_VERSION}\n"\
     "  libevent: ${LIBEVENT_VERSION}\n"\
@@ -189,4 +192,4 @@ COPY --from=build /output/ /
 
 EXPOSE 8333/tcp
 VOLUME ["/bitcoin-data"]
-CMD ["/bitcoind -conf=/bitcoin-data/bitcoin.conf"]
+CMD ["/bitcoind", "-conf=/bitcoin-data/bitcoin.conf"]
